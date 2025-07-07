@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width = device-width, initial-scale = 1.0">
+    <title>Sign into Google forms Page</title>
+    <link href="signInStyles.css" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container">
+
+        <!--Sign into Google Account-->
+        <div class="signin-section" id="signin">
+            <div id="g_id_onload"
+                data-client_id="473070785433-j66nu8cvkos5mkhml3se4mr1b4iop3po.apps.googleusercontent.com"
+                data-callback="handleCredentialResponse" data-auto_prompt="false"
+                data-scope="https://www.googleapis.com/auth/spreadsheets.readonly">
+            </div>
+            <div class="g_id_signin" data-type="standard" data-sze="small" data-theme="filled_black"
+                data-text="sign_in_with" data-shape="rectangular" data-logo_alignment="center">
+            </div>
+        </div>
+
+        <!--User information-->
+        <div id="user-info" class="hidden">
+            <div id="display-user-info"></div>
+            <!--implement sign out button here later-->
+        </div>
+
+
+        <!--Google sheets button-->
+        <div id="sheets-selection" class="hidden">
+            <button id="sheets-button" onclick="loadSheets()">Load Your Google Sheets</button>
+        </div>
+
+
+        <!--Collect desired google sheet / send google sheet data to backend-->
+        <div id="data-extraction" class="hidden"></div>
+
+    </div>
+    <script src="https://accounts.google.com/gsi/client" async></script>
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script src="gauth.js"></script>
+    <script src="sheetsFunctions.js"></script>
+</body>
+
+</html>
