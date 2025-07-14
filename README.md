@@ -11,3 +11,7 @@ A web application to enhance the user experience when observing a powerliftng pr
 - LoadSheets() now loads all of the user's google sheets as seperate buttons 
 - using flask framework, google sheets data is sent from frontend js to backend python script 
 
+# Frontend Setup
+- `cd frontend`
+- `npm i`
+- `npm start`
