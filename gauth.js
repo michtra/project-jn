@@ -41,7 +41,7 @@ function getToken() {
 
         tokenClient = google.accounts.oauth2.initTokenClient({
             client_id: "473070785433-j66nu8cvkos5mkhml3se4mr1b4iop3po.apps.googleusercontent.com",
-            scope: "https://www.googleapis.com/auth/spreadsheets.readonly",
+            scope: "https://www.googleapis.com/auth/spreadsheets.readonly https://www.googleapis.com/auth/drive.metadata.readonly",
             callback: (tokenResponse) => {
                 if (tokenResponse.error) {
                     reject(tokenResponse);

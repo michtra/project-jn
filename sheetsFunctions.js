@@ -32,8 +32,7 @@ async function loadSheets() {
 async function extractData(id, name) {
 
     //need method to determine range 
-    
-    let range = "A1:A7"
+    let range = "A1:U58"
     let response ; 
     try {
         response = await fetch(
