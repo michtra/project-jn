@@ -1,99 +1,200 @@
 import { useState, useEffect, useMemo } from 'react';
-import { workoutData } from '../data/workoutData';
 
-export const useWorkoutNavigation = () => {
-  const [selectedBlock, setSelectedBlock] = useState('quadruple block');
-  const [selectedWeek, setSelectedWeek] = useState('1');
-  const [selectedDay, setSelectedDay] = useState('Monday (1st Squat)');
-  
-  const availableBlocks = Object.keys(workoutData.blocks);
-  
+// Hook for navigation between blocks, weeks, and days
+export function useWorkoutNavigation(flaskData = null) {
+  const [selectedWeek, setSelectedWeek] = useState('');
+  const [selectedDay, setSelectedDay] = useState('');
+
+  // Get available weeks from Flask data structure
   const availableWeeks = useMemo(() => {
-    return selectedBlock ? Object.keys(workoutData.blocks[selectedBlock].weeks) : [];
-  }, [selectedBlock]);
-  
+    if (!flaskData) return [];
+    return Object.keys(flaskData);
+  }, [flaskData]);
+
+  // Get available days for the selected week
   const availableDays = useMemo(() => {
-    return selectedBlock && selectedWeek ? 
-      Object.keys(workoutData.blocks[selectedBlock].weeks[selectedWeek].days) : [];
-  }, [selectedBlock, selectedWeek]);
-  
-  // Auto-select first available day when week changes
+    if (!flaskData?.[selectedWeek]) return [];
+    return Object.keys(flaskData[selectedWeek]);
+  }, [flaskData, selectedWeek]);
+
+  // Auto-select first available options when data changes
   useEffect(() => {
-    if (availableDays.length > 0 && !availableDays.includes(selectedDay)) {
-      setSelectedDay(availableDays[0]);
-    }
-  }, [selectedWeek, availableDays, selectedDay]);
-  
-  // Auto-select first week when block changes
-  useEffect(() => {
-    if (availableWeeks.length > 0 && !availableWeeks.includes(selectedWeek)) {
+    if (availableWeeks.length > 0 && !selectedWeek) {
       setSelectedWeek(availableWeeks[0]);
     }
-  }, [selectedBlock, availableWeeks, selectedWeek]);
+  }, [availableWeeks, selectedWeek]);
+
+  useEffect(() => {
+    if (availableDays.length > 0 && !selectedDay) {
+      setSelectedDay(availableDays[0]);
+    }
+  }, [availableDays, selectedDay]);
+
+  // Reset selections when data changes
+  useEffect(() => {
+    if (flaskData) {
+      setSelectedWeek('');
+      setSelectedDay('');
+    }
+  }, [flaskData]);
 
   return {
-    selectedBlock,
     selectedWeek,
     selectedDay,
-    availableBlocks,
     availableWeeks,
     availableDays,
-    setSelectedBlock,
     setSelectedWeek,
     setSelectedDay
   };
-};
+}
 
-export const useWorkoutData = (selectedBlock, selectedWeek, selectedDay) => {
-  const [workoutExercises, setWorkoutExercises] = useState([]);
+// Hook for managing workout data and exercise updates
+export function useWorkoutData(selectedWeek, selectedDay, flaskData) {
+  const [localExercises, setLocalExercises] = useState([]);
 
-  // Load workout data when selection changes
-  useEffect(() => {
-    if (selectedBlock && selectedWeek && selectedDay) {
-      const currentWorkout = workoutData.blocks[selectedBlock].weeks[selectedWeek].days[selectedDay] || [];
-      setWorkoutExercises([...currentWorkout]);
+  // Convert Flask data structure to exercise array
+  const workoutExercises = useMemo(() => {
+    if (!flaskData?.[selectedWeek]?.[selectedDay]) {
+      return [];
     }
-  }, [selectedBlock, selectedWeek, selectedDay]);
-
-  const handleExerciseUpdate = (originalIndex, updatedExercise) => {
-    setWorkoutExercises(prev => {
-      const newExercises = [...prev];
-      newExercises[originalIndex] = { ...updatedExercise };
-      return newExercises;
-    });
-  };
-
-  return {
-    workoutExercises,
-    handleExerciseUpdate
-  };
-};
-
-export const useExerciseCategorization = (workoutExercises) => {
-  return useMemo(() => {
-    const topSets = [];
-    const backdownSets = [];
     
-    // Group exercises by name to identify top sets vs backdown sets
-    const exerciseGroups = {};
-    workoutExercises.forEach((exercise, index) => {
-      if (!exerciseGroups[exercise.exercise]) {
-        exerciseGroups[exercise.exercise] = [];
+    const dayExercises = flaskData[selectedWeek][selectedDay];
+    const exercises = [];
+    
+    // Convert Flask exercise object to array
+    Object.keys(dayExercises).forEach((exerciseName, index) => {
+      const exerciseData = dayExercises[exerciseName];
+      
+      // Handle rest day
+      if (exerciseName === "Rest") {
+        exercises.push({
+          id: `${selectedWeek}-${selectedDay}-rest`,
+          exercise: "Rest",
+          sets: 0,
+          reps: 0,
+          prescribed: "Rest",
+          weight: "",
+          rpe: "",
+          notes: "Rest Day",
+          actualWeight: "",
+          actualRpe: "",
+          actualNotes: "",
+          originalIndex: index
+        });
+        return;
       }
-      exerciseGroups[exercise.exercise].push({ ...exercise, originalIndex: index });
-    });
-    
-    // Categorize sets - first occurrence is typically top set, rest are backdown
-    Object.values(exerciseGroups).forEach(group => {
-      group.forEach((exercise, index) => {
-        if (index === 0) {
-          topSets.push(exercise);
-        } else {
-          backdownSets.push(exercise);
-        }
+      
+      // Regular exercise
+      exercises.push({
+        id: `${selectedWeek}-${selectedDay}-${exerciseName}-${index}`,
+        exercise: exerciseName,
+        prescribed: exerciseData.Prescribed || "",
+        weight: exerciseData.Weight || "",
+        rpe: exerciseData.RPE || "",
+        notes: exerciseData.Notes || "",
+        // Parse sets and reps from prescribed format (e.g., "3x5" -> sets: 3, reps: 5)
+        sets: parseSets(exerciseData.Prescribed),
+        reps: parseReps(exerciseData.Prescribed),
+        // Fields for actual performance logging
+        actualWeight: exerciseData.Weight || "",
+        actualRpe: exerciseData.RPE || "",
+        actualNotes: exerciseData.Notes || "",
+        originalIndex: index
       });
     });
     
-    return { topSets, backdownSets };
+    return exercises;
+  }, [flaskData, selectedWeek, selectedDay]);
+
+  // Update local exercises when workout exercises change
+  useEffect(() => {
+    setLocalExercises(workoutExercises);
   }, [workoutExercises]);
-};
+
+  // Handle exercise updates (for logging actual weights, RPE, etc.)
+  const handleExerciseUpdate = (exerciseId, updates) => {
+    setLocalExercises(prev => 
+      prev.map(exercise => 
+        exercise.id === exerciseId 
+          ? { ...exercise, ...updates }
+          : exercise
+      )
+    );
+  };
+
+  // Get exercise by ID
+  const getExerciseById = (exerciseId) => {
+    return localExercises.find(exercise => exercise.id === exerciseId);
+  };
+
+  // Reset all exercises to prescribed values
+  const resetExercises = () => {
+    setLocalExercises(workoutExercises);
+  };
+
+  return {
+    workoutExercises: localExercises,
+    handleExerciseUpdate,
+    getExerciseById,
+    resetExercises
+  };
+}
+
+// Hook for categorizing exercises into top sets and backdown sets
+export function useExerciseCategorization(exercises) {
+  const { topSets, backdownSets } = useMemo(() => {
+    const top = [];
+    const backdown = [];
+    
+    exercises.forEach(exercise => {
+      // Check if exercise name contains "Backdown" or similar indicators
+      if (exercise.exercise.toLowerCase().includes('backdown') || 
+          exercise.exercise.toLowerCase().includes('back down') ||
+          exercise.exercise.includes('(Backdown)')) {
+        backdown.push(exercise);
+      } else if (exercise.exercise === "Rest") {
+        // Rest days go to top sets section
+        top.push(exercise);
+      } else {
+        top.push(exercise);
+      }
+    });
+    
+    return { topSets: top, backdownSets: backdown };
+  }, [exercises]);
+
+  return { topSets, backdownSets };
+}
+
+// Utility functions to parse prescribed format
+function parseSets(prescribed) {
+  if (!prescribed || prescribed === "Rest") return 0;
+  const match = prescribed.match(/^(\d+)x/);
+  return match ? parseInt(match[1]) : 1;
+}
+
+function parseReps(prescribed) {
+  if (!prescribed || prescribed === "Rest") return 0;
+  const match = prescribed.match(/x(\d+)/);
+  return match ? parseInt(match[1]) : 1;
+}
+
+// Hook for workout statistics
+export function useWorkoutStats(exercises) {
+  const stats = useMemo(() => {
+    const totalExercises = exercises.filter(ex => ex.exercise !== "Rest").length;
+    const totalSets = exercises.reduce((sum, ex) => sum + (ex.sets || 0), 0);
+    const completedSets = exercises.filter(ex => ex.actualWeight && ex.actualWeight !== "").length;
+    const restDay = exercises.some(ex => ex.exercise === "Rest");
+    
+    return {
+      totalExercises,
+      totalSets,
+      completedSets,
+      completionPercentage: totalSets > 0 ? Math.round((completedSets / totalSets) * 100) : 0,
+      isRestDay: restDay
+    };
+  }, [exercises]);
+
+  return stats;
+}
