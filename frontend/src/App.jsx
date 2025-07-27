@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import GoogleSignIn from './components/ui/GoogleSignIn';
-import { TrendingUp, TrendingDown, Dumbbell, FileSpreadsheet, Download } from 'lucide-react';
+import { TrendingUp, TrendingDown, Dumbbell, FileSpreadsheet, Download, Activity } from 'lucide-react';
 import { useWorkoutNavigation, useWorkoutData, useExerciseCategorization } from './hooks/workoutHooks';
 import {
   WorkoutSummary,
@@ -43,7 +43,7 @@ const PlApp = () => {
     flaskData // Use Flask processed data directly
   );
 
-  const { topSets, backdownSets } = useExerciseCategorization(workoutExercises);
+  const { topSets, backdownSets, accessories } = useExerciseCategorization(workoutExercises);
 
   useEffect(() => {
     if (user && user.accessToken) {
@@ -323,7 +323,7 @@ const PlApp = () => {
                 <ExerciseSection
                   title="Main Exercises"
                   exercises={topSets}
-                  isTopSet={true}
+                  exerciseType="main"
                   onExerciseUpdate={handleExerciseUpdate}
                   icon={TrendingUp}
                   titleColor="blue"
@@ -333,10 +333,21 @@ const PlApp = () => {
                   <ExerciseSection
                     title="Backdown Sets"
                     exercises={backdownSets}
-                    isTopSet={false}
+                    exerciseType="backdown"
                     onExerciseUpdate={handleExerciseUpdate}
                     icon={TrendingDown}
                     titleColor="teal"
+                  />
+                )}
+
+                {accessories.length > 0 && (
+                  <ExerciseSection
+                    title="Accessories"
+                    exercises={accessories}
+                    exerciseType="accessory"
+                    onExerciseUpdate={handleExerciseUpdate}
+                    icon={Activity}
+                    titleColor="purple"
                   />
                 )}
               </>
