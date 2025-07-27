@@ -177,6 +177,10 @@ body {
   color: #2dd4bf;
 }
 
+.exercise-section h2.purple {
+  color: #a78bfa;
+}
+
 /* Workout Card */
 .workout-card {
   background-color: #1f2937;
@@ -191,7 +195,8 @@ body {
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 
-.workout-card.top-set {
+.workout-card.top-set,
+.workout-card.main-exercise {
   border-color: #3b82f6;
   box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.2);
 }
@@ -202,6 +207,15 @@ body {
 
 .workout-card.backdown-set:hover {
   border-color: #6b7280;
+}
+
+.workout-card.accessory-set {
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.2);
+}
+
+.workout-card.accessory-set:hover {
+  border-color: #a78bfa;
 }
 
 .card-header {
@@ -227,12 +241,17 @@ body {
   color: white;
 }
 
-.card-badge.top-set {
+.card-badge.top-set,
+.card-badge.main-exercise {
   background-color: #2563eb;
 }
 
 .card-badge.backdown-set {
   background-color: #0d9488;
+}
+
+.card-badge.accessory-set {
+  background-color: #7c3aed;
 }
 
 .card-badge svg {

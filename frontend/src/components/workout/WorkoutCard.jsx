@@ -1,8 +1,8 @@
 import React from 'react';
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import { TrendingUp, TrendingDown, Activity } from 'lucide-react';
 import { InputField, TextAreaField, StaticLabel } from '../ui/UIComponents';
 
-export const WorkoutCard = ({ exercise, isTopSet, onUpdate }) => {
+export const WorkoutCard = ({ exercise, exerciseType = 'main', onUpdate }) => {
   const handleWeightChange = (newWeight) => {
     onUpdate({ ...exercise, weightTaken: newWeight });
   };
@@ -15,13 +15,49 @@ export const WorkoutCard = ({ exercise, isTopSet, onUpdate }) => {
     onUpdate({ ...exercise, notes: newNotes });
   };
 
+  // Determine icon, label, and styling based on exercise type
+  const getExerciseConfig = () => {
+    switch (exerciseType) {
+      case 'main':
+        return {
+          icon: <TrendingUp size={14} />,
+          label: 'Main Exercise',
+          cardClass: 'main-exercise',
+          badgeClass: 'main-exercise'
+        };
+      case 'backdown':
+        return {
+          icon: <TrendingDown size={14} />,
+          label: 'Backdown',
+          cardClass: 'backdown-set',
+          badgeClass: 'backdown-set'
+        };
+      case 'accessory':
+        return {
+          icon: <Activity size={14} />,
+          label: 'Accessory',
+          cardClass: 'accessory-set',
+          badgeClass: 'accessory-set'
+        };
+      default:
+        return {
+          icon: <TrendingUp size={14} />,
+          label: 'Exercise',
+          cardClass: 'main-exercise',
+          badgeClass: 'main-exercise'
+        };
+    }
+  };
+
+  const config = getExerciseConfig();
+
   return (
-    <div className={`workout-card ${isTopSet ? 'top-set' : 'backdown-set'}`}>
+    <div className={`workout-card ${config.cardClass}`}>
       <div className="card-header">
         <h3 className="card-title">{exercise.exercise}</h3>
-        <span className={`card-badge ${isTopSet ? 'top-set' : 'backdown-set'}`}>
-          {isTopSet ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-          {isTopSet ? 'Top Set' : 'Backdown'}
+        <span className={`card-badge ${config.badgeClass}`}>
+          {config.icon}
+          {config.label}
         </span>
       </div>
       

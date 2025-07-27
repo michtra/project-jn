@@ -83,7 +83,7 @@ export const WorkoutNavigation = ({
   );
 };
 
-export const ExerciseSection = ({ title, exercises, isTopSet, onExerciseUpdate, icon: Icon, titleColor }) => {
+export const ExerciseSection = ({ title, exercises, exerciseType = 'main', onExerciseUpdate, icon: Icon, titleColor }) => {
   if (exercises.length === 0) return null;
 
   return (
@@ -94,9 +94,9 @@ export const ExerciseSection = ({ title, exercises, isTopSet, onExerciseUpdate, 
       </h2>
       {exercises.map((exercise, index) => (
         <WorkoutCard 
-          key={`${isTopSet ? 'top' : 'backdown'}-${exercise.originalIndex}`}
+          key={`${exerciseType}-${exercise.originalIndex}`}
           exercise={exercise} 
-          isTopSet={isTopSet}
+          exerciseType={exerciseType}
           onUpdate={(updatedExercise) => onExerciseUpdate(exercise.originalIndex, updatedExercise)}
         />
       ))}

@@ -45,9 +45,51 @@ def horizontal_parse(jsondata):
     for i in range(numofWeeks):
         sheetDictionary[weekArray[i]] = copy.deepcopy(innerDictionary)
 
-    #implement sorting loop to get final dictionary
+    # First pass: collect all exercises for each day to identify counts
+    exercise_counts = {}
+    for week in weekArray:
+        exercise_counts[week] = {day: {} for day in daysOfWeek}
+
     weekstarted = False
     currentDay = ""
+    
+    # First pass - count exercises per day
+    for row in data:
+        #find a header marking the day
+        if len(row) > 0 and row[0] in daysOfWeek:
+            weekstarted = True
+            currentDay = row[0]
+            day_exercise_position = 0  # Reset position counter for new day
+            continue
+
+        #skip until a header is found 
+        if not (weekstarted):
+            continue
+
+        #skip if not valid row
+        if len(row) == 0:
+            continue
+
+        #check for rest day
+        if row[0] == "rest" or row[0] == "Rest":
+            continue
+        
+        if currentDay != row[0]:
+            for i in range(numofWeeks):
+                Exercise = row[0 + 5*i] if len(row) > 0 + 5*i else ""
+                if Exercise:  # Only count non-empty exercises
+                    if Exercise in exercise_counts[weekArray[i]][currentDay]:
+                        exercise_counts[weekArray[i]][currentDay][Exercise] += 1
+                    else:
+                        exercise_counts[weekArray[i]][currentDay][Exercise] = 1
+
+    # Second pass: implement sorting loop to get final dictionary with proper labeling
+    weekstarted = False
+    currentDay = ""
+    exercise_occurrence = {}  # Track which occurrence this is for each exercise
+    day_exercise_position = 0  # Track exercise position within current day
+    for week in weekArray:
+        exercise_occurrence[week] = {day: {} for day in daysOfWeek}
     
     for row in data:
         #find a header marking the day
@@ -72,20 +114,44 @@ def horizontal_parse(jsondata):
             continue
         
         if currentDay != row[0]:
+            # Check if this row introduces a new exercise (check first week column)
+            first_week_exercise = row[0] if len(row) > 0 else ""
+            if first_week_exercise:  # Only increment position if there's actually an exercise
+                day_exercise_position += 1
+            
             for i in range(numofWeeks):
                 #these two are always defined
                 Exercise = row[0 + 5*i] if len(row) > 0 + 5*i else ""
                 Prescribed = row[1 + 5*i] if len(row) > 1 + 5*i else ""
 
+                if not Exercise:  # Skip empty exercises
+                    continue
+
                 #these need to be checked if there or not (jumps defined by spaces apart in google sheet following CLS format)
                 Weight = row[2 + 5*i] if len(row) > 2 + 5*i else ""
                 RPE = row[3 + 5*i] if len(row) > 3 + 5*i else ""
                 Notes = row[4 + 5*i] if len(row) > 4 + 5*i else ""
-    
-                exerciseDictionary = {"Prescribed": Prescribed, "Weight": Weight, "RPE": RPE, "Notes": Notes}
-                if Exercise in sheetDictionary[weekArray[i]][currentDay]:
-                    Exercise = f"{Exercise} (Backdown)"
 
+                # Track occurrence count for this exercise
+                if Exercise not in exercise_occurrence[weekArray[i]][currentDay]:
+                    exercise_occurrence[weekArray[i]][currentDay][Exercise] = 0
+                exercise_occurrence[weekArray[i]][currentDay][Exercise] += 1
+
+                # Determine exercise type
+                current_occurrence = exercise_occurrence[weekArray[i]][currentDay][Exercise]
+                total_occurrences = exercise_counts[weekArray[i]][currentDay][Exercise]
+                is_first_exercise = day_exercise_position == 1
+                
+                if current_occurrence == 1 and total_occurrences == 1 and not is_first_exercise:
+                    # Single occurrence and not first exercise - mark as accessory
+                    Exercise = f"{Exercise} (Accessory)"
+                elif current_occurrence > 1:
+                    # Multiple occurrences - this is a backdown
+                    Exercise = f"{Exercise} (Backdown)"
+                # If current_occurrence == 1 and total_occurrences > 1, it's a primary set (no modification)
+                # If it's the first exercise of the day, no modification regardless of occurrence count
+
+                exerciseDictionary = {"Prescribed": Prescribed, "Weight": Weight, "RPE": RPE, "Notes": Notes}
                 sheetDictionary[weekArray[i]][currentDay][Exercise] = exerciseDictionary
 
     return sheetDictionary
@@ -98,4 +164,3 @@ def getData():
 
 if __name__ == "__main__":
     app.run(port = 5000, debug = True)
-    

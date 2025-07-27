@@ -140,30 +140,37 @@ export function useWorkoutData(selectedWeek, selectedDay, flaskData) {
   };
 }
 
-// Hook for categorizing exercises into top sets and backdown sets
+// Hook for categorizing exercises into top sets, backdown sets, and accessories
 export function useExerciseCategorization(exercises) {
-  const { topSets, backdownSets } = useMemo(() => {
+  const { topSets, backdownSets, accessories } = useMemo(() => {
     const top = [];
     const backdown = [];
+    const accessory = [];
     
     exercises.forEach(exercise => {
-      // Check if exercise name contains "Backdown" or similar indicators
-      if (exercise.exercise.toLowerCase().includes('backdown') || 
-          exercise.exercise.toLowerCase().includes('back down') ||
-          exercise.exercise.includes('(Backdown)')) {
+      // Check if exercise name contains "Accessory" indicators
+      if (exercise.exercise.toLowerCase().includes('accessory') || 
+          exercise.exercise.includes('(Accessory)')) {
+        accessory.push(exercise);
+      }
+      // Check if exercise name contains "Backdown" indicators
+      else if (exercise.exercise.toLowerCase().includes('backdown') || 
+               exercise.exercise.toLowerCase().includes('back down') ||
+               exercise.exercise.includes('(Backdown)')) {
         backdown.push(exercise);
-      } else if (exercise.exercise === "Rest") {
-        // Rest days go to top sets section
+      } 
+      // Rest days and main exercises go to top sets
+      else if (exercise.exercise === "Rest") {
         top.push(exercise);
       } else {
         top.push(exercise);
       }
     });
     
-    return { topSets: top, backdownSets: backdown };
+    return { topSets: top, backdownSets: backdown, accessories: accessory };
   }, [exercises]);
 
-  return { topSets, backdownSets };
+  return { topSets, backdownSets, accessories };
 }
 
 // Utility functions to parse prescribed format
