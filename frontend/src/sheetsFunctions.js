@@ -1,5 +1,7 @@
 let token = null;
 let tokenClient = null;
+let spreadsheetId = null;
+let rawData = null;
 
 export function setAuthToken(authToken) {
   token = authToken;
@@ -7,6 +9,14 @@ export function setAuthToken(authToken) {
 
 export function getAuthToken() {
   return token;
+}
+
+export function setSpreadSheetId(sheetId) {
+  spreadsheetId = sheetId;
+}
+
+export function getSpreadSheetId() {
+  return spreadsheetId;
 }
 
 // Initialize Google API token client
@@ -94,6 +104,7 @@ export async function getSheetData(sheetId, range = "A1:U58") {
     }
 
     const data = await response.json();
+    rawData = data;
     
     if (data.error) {
       throw new Error(data.error.message || 'API Error');
@@ -202,12 +213,47 @@ export const workoutData = ${JSON.stringify(data, null, 2)};
 }
 
 // Extract data from a sheet and optionally send to backend
+// range specified by max sheet size accounting for data that doesn't start in first column
 export async function extractData(sheetId, sheetName, range = "A1:U58") {
   try {
     const data = await getSheetData(sheetId, range);
     return data;
   } catch (error) {
     console.error(`Error extracting data from ${sheetName}:`, error);
+    throw error;
+  }
+}
+
+// Send data to Flask backend
+export async function sendNewDataToBackend(json) {
+  try {
+
+    //get current spreadsheetID
+    const currentspreadsheetID = getSpreadSheetId();
+
+    //include SSID in data
+    const jsonWithSpreadsheetID = {
+      ...json, 
+      spreadsheetId: currentspreadsheetID,
+      rawData: rawData
+    };
+
+
+    const response = await fetch("http://localhost:5001/Newdata", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(jsonWithSpreadsheetID)
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to send to backend: ${response.status} ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error sending to backend:', error);
     throw error;
   }
 }

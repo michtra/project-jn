@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+// NO backend imports - all tracking done in WorkoutCard now
 
 // Hook for navigation between blocks, weeks, and days
 export function useWorkoutNavigation(flaskData = null) {
@@ -48,7 +49,7 @@ export function useWorkoutNavigation(flaskData = null) {
   };
 }
 
-// Hook for managing workout data and exercise updates
+// CLEAN useWorkoutData - only manages local state, no backend tracking
 export function useWorkoutData(selectedWeek, selectedDay, flaskData) {
   const [localExercises, setLocalExercises] = useState([]);
 
@@ -79,7 +80,10 @@ export function useWorkoutData(selectedWeek, selectedDay, flaskData) {
           actualWeight: "",
           actualRpe: "",
           actualNotes: "",
-          originalIndex: index
+          originalIndex: index,
+          // Add fields that WorkoutCard expects
+          weightTaken: "",
+          actual_rpe: ""
         });
         return;
       }
@@ -92,13 +96,20 @@ export function useWorkoutData(selectedWeek, selectedDay, flaskData) {
         weight: exerciseData.Weight || "",
         rpe: exerciseData.RPE || "",
         notes: exerciseData.Notes || "",
-        // Parse sets and reps from prescribed format (e.g., "3x5" -> sets: 3, reps: 5)
+
+        // Parse sets and reps from prescribed format ( "3x5" -> sets: 3, reps: 5)
         sets: parseSets(exerciseData.Prescribed),
         reps: parseReps(exerciseData.Prescribed),
-        // Fields for actual performance logging
+
+        // Fields for actual performance logging (workoutHooks format)
         actualWeight: exerciseData.Weight || "",
         actualRpe: exerciseData.RPE || "",
         actualNotes: exerciseData.Notes || "",
+        
+        // Fields that WorkoutCard expects
+        weightTaken: exerciseData.Weight || "",
+        actual_rpe: exerciseData.RPE || "",
+        
         originalIndex: index
       });
     });
@@ -111,26 +122,42 @@ export function useWorkoutData(selectedWeek, selectedDay, flaskData) {
     setLocalExercises(workoutExercises);
   }, [workoutExercises]);
 
-  // Handle exercise updates (for logging actual weights, RPE, etc.)
-  const handleExerciseUpdate = (exerciseId, updates) => {
+  const handleExerciseUpdate = useCallback((exerciseId, field, value) => {
+    console.log('🔍 Local state update:', { exerciseId, field, value });
+    
+    // Map field names between workoutHooks and WorkoutCard formats
+    const fieldMapping = {
+      'actualWeight': 'weightTaken',
+      'actualRpe': 'actual_rpe',
+      'actualNotes': 'notes'
+    };
+    
+    // Update local state with both field formats for compatibility
     setLocalExercises(prev => 
-      prev.map(exercise => 
-        exercise.id === exerciseId 
-          ? { ...exercise, ...updates }
-          : exercise
-      )
+      prev.map(exercise => {
+        if (exercise.id === exerciseId) {
+          const updates = { [field]: value };
+          
+          // Also update the corresponding field in the other format
+          if (fieldMapping[field]) {
+            updates[fieldMapping[field]] = value;
+          }
+          
+          return { ...exercise, ...updates };
+        }
+        return exercise;
+      })
     );
-  };
+  }, []);
 
-  // Get exercise by ID
-  const getExerciseById = (exerciseId) => {
+  const getExerciseById = useCallback((exerciseId) => {
     return localExercises.find(exercise => exercise.id === exerciseId);
-  };
+  }, [localExercises]);
 
   // Reset all exercises to prescribed values
-  const resetExercises = () => {
+  const resetExercises = useCallback(() => {
     setLocalExercises(workoutExercises);
-  };
+  }, [workoutExercises]);
 
   return {
     workoutExercises: localExercises,
@@ -142,28 +169,76 @@ export function useWorkoutData(selectedWeek, selectedDay, flaskData) {
 
 // Hook for categorizing exercises into top sets and backdown sets
 export function useExerciseCategorization(exercises) {
-  const { topSets, backdownSets } = useMemo(() => {
-    const top = [];
-    const backdown = [];
-    
+  const { topSets, backdownSets, accessories } = useMemo(() => {
+    // Safety check for undefined or non-array exercises
+    if (!exercises || !Array.isArray(exercises)) {
+      return { topSets: [], backdownSets: [], accessories: [] };
+    }
+
+    const topSets = [];
+    const backdownSets = [];
+    const accessories = [];
+
+    // Helper function to check if exercise is a competition movement
+    const isCompetitionMovement = (exerciseName) => {
+      if (!exerciseName) return false;
+      
+      const name = exerciseName.toLowerCase().trim();
+      
+      const compPatterns = [
+        'comp sq',
+        'comp bench', 
+        'comp deadlift',
+        'comp dl',
+        'competition squat',
+        'competition bench',
+        'competition deadlift'
+      ];
+      
+      return compPatterns.some(pattern => name.includes(pattern));
+    };
+
+    // Helper function to check if exercise is labeled as backdown
+    const isBackdownSet = (exerciseName) => {
+      if (!exerciseName) return false;
+      
+      const name = exerciseName.toLowerCase();
+      
+      return name.includes('backdown') || 
+             name.includes('back down') || 
+             name.includes('(backdown)');
+    };
+
     exercises.forEach(exercise => {
-      // Check if exercise name contains "Backdown" or similar indicators
-      if (exercise.exercise.toLowerCase().includes('backdown') || 
-          exercise.exercise.toLowerCase().includes('back down') ||
-          exercise.exercise.includes('(Backdown)')) {
-        backdown.push(exercise);
-      } else if (exercise.exercise === "Rest") {
-        // Rest days go to top sets section
-        top.push(exercise);
-      } else {
-        top.push(exercise);
+      // Handle rest days
+      if (exercise.exercise === "Rest") {
+        topSets.push(exercise);
+        return;
+      }
+
+      // First check if it's labeled as backdown (takes priority)
+      if (isBackdownSet(exercise.exercise)) {
+        backdownSets.push(exercise);
+      }
+      // Then check if it's a competition movement (and not backdown)
+      else if (isCompetitionMovement(exercise.exercise)) {
+        topSets.push(exercise);
+      }
+      // Everything else is an accessory
+      else {
+        accessories.push(exercise);
       }
     });
-    
-    return { topSets: top, backdownSets: backdown };
+
+    console.log('📊 Exercise Categorization:');
+    console.log(`🎯 Top Sets (Comp lifts): ${topSets.length}`);
+    console.log(`📉 Backdown Sets: ${backdownSets.length}`);
+    console.log(`💪 Accessories: ${accessories.length}`);
+
+    return { topSets, backdownSets, accessories };
   }, [exercises]);
 
-  return { topSets, backdownSets };
+  return { topSets, backdownSets, accessories };
 }
 
 // Utility functions to parse prescribed format
