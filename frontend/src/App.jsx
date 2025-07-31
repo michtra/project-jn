@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import GoogleSignIn from './components/ui/GoogleSignIn';
-import { TrendingUp, TrendingDown, Dumbbell, FileSpreadsheet, Download } from 'lucide-react';
+import { TrendingUp, TrendingDown, Dumbbell, FileSpreadsheet, Download, Target, Zap } from 'lucide-react';
 import { useWorkoutNavigation, useWorkoutData, useExerciseCategorization } from './hooks/workoutHooks';
 import {
   WorkoutSummary,
@@ -13,7 +13,8 @@ import {
   getSheetDataAndProcessWithFlask, 
   setAuthToken,
   getLocalFlaskData,
-  downloadFlaskDataAsFile 
+  downloadFlaskDataAsFile, 
+  setSpreadSheetId
 } from './sheetsFunctions';
 
 const PlApp = () => {
@@ -43,7 +44,29 @@ const PlApp = () => {
     flaskData // Use Flask processed data directly
   );
 
-  const { topSets, backdownSets } = useExerciseCategorization(workoutExercises);
+  const { topSets, backdownSets, accessories } = useExerciseCategorization(workoutExercises);
+
+  const handleWorkoutCardUpdate = (originalIndex, updatedExercise) => {
+    console.log('App received update:', { originalIndex, updatedExercise });
+    
+    // Find the exercise by originalIndex
+    const exercise = workoutExercises.find(ex => ex.originalIndex === originalIndex);
+    if (exercise) {
+      // Determine what field changed by comparing old vs new
+      const oldEx = exercise;
+      const newEx = updatedExercise;
+      
+      if (oldEx.weightTaken !== newEx.weightTaken) {
+        handleExerciseUpdate(exercise.id, 'actualWeight', newEx.weightTaken);
+      }
+      if (oldEx.actual_rpe !== newEx.actual_rpe) {
+        handleExerciseUpdate(exercise.id, 'actualRpe', newEx.actual_rpe);
+      }
+      if (oldEx.notes !== newEx.notes) {
+        handleExerciseUpdate(exercise.id, 'actualNotes', newEx.notes);
+      }
+    }
+  };
 
   useEffect(() => {
     if (user && user.accessToken) {
@@ -90,6 +113,7 @@ const PlApp = () => {
     setSelectedSheetName(sheetName);
     setSheetsError(null);
     setIsProcessingData(true);
+    setSpreadSheetId(sheetId);
 
     try {
       console.log(`Loading and processing data from sheet: ${sheetName}`);
@@ -271,7 +295,6 @@ const PlApp = () => {
         {/* Only show workout navigation if data is processed */}
         {selectedSheetId && flaskData && (
           <>
-            {/* Simplified Navigation - No blocks, just weeks and days */}
             <div className="workout-navigation mb-6 p-4 bg-white rounded-lg shadow-sm border">
               <h3 className="text-lg font-semibold mb-4">Workout Navigation</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -320,23 +343,44 @@ const PlApp = () => {
               <>
                 <WorkoutSummary exercises={workoutExercises} />
 
-                <ExerciseSection
-                  title="Main Exercises"
-                  exercises={topSets}
-                  isTopSet={true}
-                  onExerciseUpdate={handleExerciseUpdate}
-                  icon={TrendingUp}
-                  titleColor="blue"
-                />
+                {topSets.length > 0 && (
+                  <ExerciseSection
+                    title="Top Sets"
+                    exercises={topSets}
+                    isTopSet={true}
+                    onExerciseUpdate={handleWorkoutCardUpdate}
+                    icon={Target}
+                    titleColor="red"
+                    selectedDay={selectedDay}
+                    selectedWeek={selectedWeek}
+                  />
+                )}
 
+                {/* Backdown Sets - Any exercise labeled as backdown */}
                 {backdownSets.length > 0 && (
                   <ExerciseSection
                     title="Backdown Sets"
                     exercises={backdownSets}
                     isTopSet={false}
-                    onExerciseUpdate={handleExerciseUpdate}
+                    onExerciseUpdate={handleWorkoutCardUpdate}
                     icon={TrendingDown}
-                    titleColor="teal"
+                    titleColor="orange"
+                    selectedDay={selectedDay}
+                    selectedWeek={selectedWeek}
+                  />
+                )}
+
+                {/* Accessories - Everything else */}
+                {accessories.length > 0 && (
+                  <ExerciseSection
+                    title="Accessory Exercises"
+                    exercises={accessories}
+                    isTopSet={false}
+                    onExerciseUpdate={handleWorkoutCardUpdate}
+                    icon={Zap}
+                    titleColor="purple"
+                    selectedDay={selectedDay}
+                    selectedWeek={selectedWeek}
                   />
                 )}
               </>

@@ -1,6 +1,14 @@
 import React from 'react';
 
-export const InputField = ({ label, value, onChange, placeholder, type = "text", className = "" }) => {
+export const InputField = ({ 
+  label, 
+  value, 
+  onChange, 
+  onKeyDown,       
+  placeholder, 
+  type = "text", 
+  className = "" 
+}) => {
   return (
     <div className={`input-field ${className}`}>
       {label && <label className="input-label">{label}</label>}
@@ -8,6 +16,7 @@ export const InputField = ({ label, value, onChange, placeholder, type = "text",
         type={type}
         value={value || ''}
         onChange={(e) => onChange(e.target.value)}
+        onKeyDown={onKeyDown}  
         placeholder={placeholder}
         className={`input-control ${className === 'narrow' ? 'narrow' : ''}`}
       />
@@ -15,13 +24,21 @@ export const InputField = ({ label, value, onChange, placeholder, type = "text",
   );
 };
 
-export const TextAreaField = ({ label, value, onChange, placeholder, className = "" }) => {
+export const TextAreaField = ({ 
+  label, 
+  value, 
+  onChange, 
+  onKeyDown,        
+  placeholder, 
+  className = "" 
+}) => {
   return (
     <div className={className}>
       <label className="input-label">{label}</label>
       <textarea
         value={value || ''}
         onChange={(e) => onChange(e.target.value)}
+        onKeyDown={onKeyDown}  
         placeholder={placeholder}
         rows={2}
         className="textarea-control"

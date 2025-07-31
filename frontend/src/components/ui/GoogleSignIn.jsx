@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { setAuthToken, getToken } from '../../sheetsFunctions'; // Adjust path as needed
+import { setAuthToken, getToken } from '../../sheetsFunctions'; 
 
 const GoogleSignIn = ({ onUserLoaded }) => {
   const [isLoading, setIsLoading] = useState(false);
