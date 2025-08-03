@@ -86,6 +86,16 @@ export const WorkoutNavigation = ({
 export const ExerciseSection = ({ title, exercises, isTopSet, onExerciseUpdate, icon: Icon, titleColor, selectedDay, selectedWeek }) => {
   if (exercises.length === 0) return null;
 
+  // Determine exercise type based on the title
+  const getExerciseType = () => {
+    if (title === "Top Sets") return "topset";
+    if (title === "Backdown Sets") return "backdown";
+    if (title === "Accessory Exercises") return "accessory";
+    return "accessory"; // default fallback
+  };
+
+  const exerciseType = getExerciseType();
+
   return (
     <div className="exercise-section">
       <h2 className={titleColor}>
@@ -94,9 +104,10 @@ export const ExerciseSection = ({ title, exercises, isTopSet, onExerciseUpdate, 
       </h2>
       {exercises.map((exercise, index) => (
         <WorkoutCard 
-          key={`${isTopSet ? 'top' : 'backdown'}-${exercise.originalIndex}`}
+          key={`${exerciseType}-${exercise.originalIndex}`}
           exercise={exercise} 
           isTopSet={isTopSet}
+          exerciseType={exerciseType}
           onUpdate={(updatedExercise) => onExerciseUpdate(exercise.originalIndex, updatedExercise)}
           currentWeek={selectedWeek}
           currentDay={selectedDay}
