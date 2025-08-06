@@ -1,6 +1,63 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-// NO backend imports - all tracking done in WorkoutCard now
 
+//define day order
+const day_order = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+
+// Helper to capitalize keys
+function capitalizeDay(dayName) {
+  if (!dayName) return dayName;
+
+  return dayName.charAt(0).toUpperCase() + dayName.slice(1);
+}
+
+// Helper function to get day order index
+function getDayOrder(dayName) {
+  // Add unknown days to end
+  if (!dayName) return 999;
+
+  const normalizeDay = dayName.toLowerCase().trim();
+
+  // Check for the day name at beginning of key string
+  const weekLength = day_order.length;
+  for (let i = 0; i < weekLength; ++i) {
+    const dayPattern = day_order[i];
+    if (normalizeDay.startsWith(dayPattern)) {
+      return i;
+    }
+  }
+
+  // Fallback will check if day name appears anywhere in string 
+  const index = day_order.findIndex(day => normalizeDay.includes(day));
+  return index === -1 ? 999 : index;
+}
+
+// Helper to create array with ordered day structure
+function createOrderedArray(sortedData, selectedWeek) {
+  if (!sortedData?.[selectedWeek]) return [];
+
+  const weekData = sortedData[selectedWeek];
+  const days = Object.keys(weekData);
+
+  const sortedArray = days.map(dayName => ({
+    name: dayName, 
+    display: capitalizeDay(dayName),
+    orderIndex: getDayOrder(dayName),
+    data: weekData[dayName]
+  }));
+
+  // Sort the array 
+  sortedArray.sort((a,b) => {
+    if (a.orderIndex !== b.orderIndex) {
+      return a.orderIndex - b.orderIndex;
+    }
+    // If both unknown, sort alphabetically
+    return a.name.localeCompare(b.name);
+  });
+
+  return sortedArray;
+}
+
+// Hook for navigation between blocks, weeks, and days
 // Hook for navigation between blocks, weeks, and days
 export function useWorkoutNavigation(flaskData = null) {
   const [selectedWeek, setSelectedWeek] = useState('');
@@ -12,11 +69,24 @@ export function useWorkoutNavigation(flaskData = null) {
     return Object.keys(flaskData);
   }, [flaskData]);
 
-  // Get available days for the selected week
-  const availableDays = useMemo(() => {
-    if (!flaskData?.[selectedWeek]) return [];
-    return Object.keys(flaskData[selectedWeek]);
+  // Create ordered days structure for the selected week
+  const orderedDaysStructure = useMemo(() => {
+    return createOrderedArray(flaskData, selectedWeek);
   }, [flaskData, selectedWeek]);
+
+  // Get available days in correct order (just the names for backward compatibility)
+  const availableDays = useMemo(() => {
+    return orderedDaysStructure.map(dayObj => dayObj.name);
+  }, [orderedDaysStructure]);
+
+  // Get available days with display names for dropdown
+  const availableDaysForDropdown = useMemo(() => {
+    return orderedDaysStructure.map(dayObj => ({
+      value: dayObj.name,
+      label: dayObj.displayName,
+      orderIndex: dayObj.orderIndex
+    }));
+  }, [orderedDaysStructure]);
 
   // Auto-select first available options when data changes
   useEffect(() => {
@@ -43,13 +113,15 @@ export function useWorkoutNavigation(flaskData = null) {
     selectedWeek,
     selectedDay,
     availableWeeks,
-    availableDays,
+    availableDays, 
+    availableDaysForDropdown, 
+    orderedDaysStructure, 
     setSelectedWeek,
     setSelectedDay
   };
 }
 
-// CLEAN useWorkoutData - only manages local state, no backend tracking
+
 export function useWorkoutData(selectedWeek, selectedDay, flaskData) {
   const [localExercises, setLocalExercises] = useState([]);
 
@@ -192,7 +264,8 @@ export function useExerciseCategorization(exercises) {
         'comp dl',
         'competition squat',
         'competition bench',
-        'competition deadlift'
+        'competition deadlift',
+        'low bar squat'
       ];
       
       return compPatterns.some(pattern => name.includes(pattern));
@@ -229,11 +302,6 @@ export function useExerciseCategorization(exercises) {
         accessories.push(exercise);
       }
     });
-
-    console.log('📊 Exercise Categorization:');
-    console.log(`🎯 Top Sets (Comp lifts): ${topSets.length}`);
-    console.log(`📉 Backdown Sets: ${backdownSets.length}`);
-    console.log(`💪 Accessories: ${accessories.length}`);
 
     return { topSets, backdownSets, accessories };
   }, [exercises]);
