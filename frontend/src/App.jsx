@@ -1,19 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import GoogleSignIn from './components/ui/GoogleSignIn';
-import { TrendingUp, TrendingDown, Dumbbell, FileSpreadsheet, Download, Target, Zap } from 'lucide-react';
+import {  TrendingDown, Dumbbell, FileSpreadsheet, Target, Zap, Calculator, ArrowLeft } from 'lucide-react';
 import { useWorkoutNavigation, useWorkoutData, useExerciseCategorization } from './hooks/workoutHooks';
 import {
   WorkoutSummary,
-  WorkoutNavigation,
   ExerciseSection,
   EmptyWorkoutMessage
 } from './components/workout/WorkoutComponents';
+import WeightCalculator from './components/workout/WeightCalculator';
 import { 
   loadSheets, 
   getSheetDataAndProcessWithFlask, 
   setAuthToken,
-  getLocalFlaskData,
-  downloadFlaskDataAsFile, 
   setSpreadSheetId
 } from './sheetsFunctions';
 
@@ -27,6 +25,9 @@ const PlApp = () => {
   const [sheetData, setSheetData] = useState(null);
   const [flaskData, setFlaskData] = useState(null);
   const [isProcessingData, setIsProcessingData] = useState(false);
+  
+  // Add navigation state for weight calculator
+  const [currentView, setCurrentView] = useState('main'); // 'main' or 'weight-calculator'
 
   // Use Flask data structure with navigation hooks
   const {
@@ -106,6 +107,7 @@ const PlApp = () => {
     setSelectedSheetName('');
     setSheetData(null);
     setFlaskData(null);
+    setCurrentView('main'); // Reset to main view on sign out
   };
 
   const handleSheetSelect = async (sheetId, sheetName) => {
@@ -135,12 +137,6 @@ const PlApp = () => {
     }
   };
 
-  const handleDownloadData = () => {
-    if (flaskData) {
-      downloadFlaskDataAsFile(flaskData, `workoutData_${selectedSheetName.replace(/[^a-zA-Z0-9]/g, '_')}.js`);
-    }
-  };
-
   if (!user) {
     return (
       <div className='app-container'>
@@ -149,6 +145,45 @@ const PlApp = () => {
     );
   }
 
+  // Render Weight Calculator view
+  if (currentView === 'weight-calculator') {
+    return (
+      <div className="app-container">
+        <div className="main-content">
+          <header className="app-header flex items-center justify-between mb-6">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setCurrentView('main')}
+                className="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors text-gray-700"
+              >
+                <ArrowLeft size={20} />
+                Back to App
+              </button>
+              <div className="flex items-center gap-2">
+                <Calculator size={32} />
+                <h1 className="text-2xl font-bold">Weight Calculator</h1>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-gray-600">
+                Welcome, {user.name}
+              </span>
+              <button
+                onClick={handleSignOut}
+                className="text-sm px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+              >
+                Sign Out
+              </button>
+            </div>
+          </header>
+          
+          <WeightCalculator />
+        </div>
+      </div>
+    );
+  }
+
+  // Main app view
   return (
     <div className="app-container">
       <div className="main-content">
@@ -158,18 +193,16 @@ const PlApp = () => {
             <h1 className="text-2xl font-bold">project jn</h1>
           </div>
           <div className="flex items-center gap-4">
+            <button
+              onClick={() => setCurrentView('weight-calculator')}
+              className="flex items-center gap-2 px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors text-sm"
+            >
+              <Calculator size={16} />
+              Weight Calculator
+            </button>
             <span className="text-sm text-gray-600">
               Welcome, {user.name}
             </span>
-            {flaskData && (
-              <button
-                onClick={handleDownloadData}
-                className="text-sm px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition-colors flex items-center gap-1"
-              >
-                <Download size={16} />
-                Download Data
-              </button>
-            )}
             <button
               onClick={handleSignOut}
               className="text-sm px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
@@ -259,35 +292,6 @@ const PlApp = () => {
               <p className="text-blue-800 font-medium">
                 Processing sheet data with Flask backend...
               </p>
-            </div>
-          </div>
-        )}
-
-        {/* Show success info if data is loaded and processed */}
-        {sheetData && flaskData && (
-          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-            <p className="text-green-800 font-medium">
-              ✓ Sheet data loaded and processed by Flask backend
-            </p>
-            <p className="text-green-700 text-sm mt-1">
-              Found {sheetData.values ? sheetData.values.length : 0} rows of raw data
-            </p>
-            <p className="text-green-700 text-sm">
-              Processed into {Object.keys(flaskData || {}).length} workout weeks
-            </p>
-            <div className="mt-2 flex gap-2">
-              <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
-                Weeks: {Object.keys(flaskData || {}).join(', ')}
-              </span>
-            </div>
-            <div className="mt-2">
-              <button
-                onClick={handleDownloadData}
-                className="text-sm px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors flex items-center gap-1"
-              >
-                <Download size={14} />
-                Download as workoutData.js
-              </button>
             </div>
           </div>
         )}

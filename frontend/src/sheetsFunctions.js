@@ -139,18 +139,6 @@ export async function sendToBackend(json) {
   }
 }
 
-// Store workout data locally (in memory/state) - using Flask structure
-let localFlaskData = null;
-
-export function setLocalFlaskData(data) {
-  localFlaskData = data;
-  console.log('Flask workout data stored locally:', data);
-}
-
-export function getLocalFlaskData() {
-  return localFlaskData;
-}
-
 // Get sheet data, process it with Flask backend, and store locally
 export async function getSheetDataAndProcessWithFlask(sheetId, range = "A1:U58") {
   try {
@@ -159,10 +147,7 @@ export async function getSheetDataAndProcessWithFlask(sheetId, range = "A1:U58")
     
     console.log('Sending data to Flask backend for processing...');
     const processedData = await sendToBackend(sheetData);
-    
-    console.log('Storing Flask processed data locally...');
-    setLocalFlaskData(processedData);
-    
+  
     return {
       rawData: sheetData,
       processedData: processedData
@@ -171,45 +156,6 @@ export async function getSheetDataAndProcessWithFlask(sheetId, range = "A1:U58")
     console.error('Error in getSheetDataAndProcessWithFlask:', error);
     throw error;
   }
-}
-
-// Save Flask data structure as JavaScript file
-export function downloadFlaskDataAsFile(data, filename = 'workoutData.js') {
-  const fileContent = `// Generated workout data from Google Sheets (Flask format)
-export const workoutData = ${JSON.stringify(data, null, 2)};
-
-// Data structure explanation:
-// {
-//   "Week1": {
-//     "Monday (1st Squat)": {
-//       "Squat": {
-//         "Prescribed": "1x4",
-//         "Weight": "220",
-//         "RPE": "5",
-//         "Notes": "Felt solid, good depth"
-//       },
-//       "Squat (Backdown)": {
-//         "Prescribed": "3x5",
-//         "Weight": "200",
-//         "RPE": "5", 
-//         "Notes": "Good backdown volume"
-//       }
-//     }
-//   }
-// }`;
-  
-  const blob = new Blob([fileContent], { type: 'text/javascript' });
-  const url = URL.createObjectURL(blob);
-  
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  
-  console.log(`Flask workout data downloaded as ${filename}`);
 }
 
 // Extract data from a sheet and optionally send to backend
