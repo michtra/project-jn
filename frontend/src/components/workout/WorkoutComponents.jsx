@@ -83,7 +83,7 @@ export const WorkoutNavigation = ({
   );
 };
 
-export const ExerciseSection = ({ title, exercises, isTopSet, onExerciseUpdate, icon: Icon, titleColor }) => {
+export const ExerciseSection = ({ title, exercises, isTopSet, onExerciseUpdate, icon: Icon, titleColor, selectedDay, selectedWeek }) => {
   if (exercises.length === 0) return null;
 
   return (
@@ -98,6 +98,8 @@ export const ExerciseSection = ({ title, exercises, isTopSet, onExerciseUpdate, 
           exercise={exercise} 
           isTopSet={isTopSet}
           onUpdate={(updatedExercise) => onExerciseUpdate(exercise.originalIndex, updatedExercise)}
+          currentWeek={selectedWeek}
+          currentDay={selectedDay}
         />
       ))}
     </div>
