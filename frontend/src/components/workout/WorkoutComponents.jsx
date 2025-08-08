@@ -3,13 +3,17 @@ import { Activity } from 'lucide-react';
 import { Select } from '../ui/UIComponents';
 import { WorkoutCard } from './WorkoutCard';
 
-export const WorkoutSummary = ({ exercises }) => {
+export const WorkoutSummary = ({ exercises, topSets, topSetsCount }) => {
   const totalSets = exercises.reduce((sum, ex) => sum + ex.sets, 0);
   const totalVolume = exercises.reduce((sum, ex) => 
     sum + (ex.weightTaken ? parseFloat(ex.weightTaken) * ex.sets * ex.reps : 0), 0
   );
+  
+  // Count unique main lifts (Squat, Bench, Deadlift) being performed
   const mainLifts = exercises.filter(ex => 
-    ['Squat', 'Bench', 'Deadlift'].includes(ex.exercise)
+    ['Squat', 'Bench', 'Deadlift'].some(lift => 
+      ex.exercise && ex.exercise.toLowerCase().includes(lift.toLowerCase())
+    )
   ).length;
   
   return (

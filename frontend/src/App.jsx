@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import './App.css';
 import GoogleSignIn from './components/ui/GoogleSignIn';
-import {  TrendingDown, Dumbbell, FileSpreadsheet, Target, Zap, Calculator, ArrowLeft } from 'lucide-react';
+import { TrendingDown, Dumbbell, FileSpreadsheet, Target, Zap, Calculator, ArrowLeft } from 'lucide-react';
 import { useWorkoutNavigation, useWorkoutData, useExerciseCategorization } from './hooks/workoutHooks';
 import {
   WorkoutSummary,
@@ -25,11 +26,9 @@ const PlApp = () => {
   const [sheetData, setSheetData] = useState(null);
   const [flaskData, setFlaskData] = useState(null);
   const [isProcessingData, setIsProcessingData] = useState(false);
-  
-  // Add navigation state for weight calculator
-  const [currentView, setCurrentView] = useState('main'); // 'main' or 'weight-calculator'
 
-  // Use Flask data structure with navigation hooks
+  const [currentView, setCurrentView] = useState('main'); // 'main' | 'weight-calculator'
+
   const {
     selectedWeek,
     selectedDay,
@@ -42,21 +41,17 @@ const PlApp = () => {
   const { workoutExercises, handleExerciseUpdate } = useWorkoutData(
     selectedWeek,
     selectedDay,
-    flaskData // Use Flask processed data directly
+    flaskData
   );
 
   const { topSets, backdownSets, accessories } = useExerciseCategorization(workoutExercises);
 
   const handleWorkoutCardUpdate = (originalIndex, updatedExercise) => {
-    console.log('App received update:', { originalIndex, updatedExercise });
-    
-    // Find the exercise by originalIndex
     const exercise = workoutExercises.find(ex => ex.originalIndex === originalIndex);
     if (exercise) {
-      // Determine what field changed by comparing old vs new
       const oldEx = exercise;
       const newEx = updatedExercise;
-      
+
       if (oldEx.weightTaken !== newEx.weightTaken) {
         handleExerciseUpdate(exercise.id, 'actualWeight', newEx.weightTaken);
       }
@@ -90,9 +85,7 @@ const PlApp = () => {
     try {
       const sheets = await loadSheets();
       setAvailableSheets(sheets);
-      console.log('Loaded sheets:', sheets);
     } catch (error) {
-      console.error('Error loading sheets:', error);
       setSheetsError('Failed to load spreadsheets. Please try signing in again.');
     } finally {
       setIsLoadingSheets(false);
@@ -107,7 +100,7 @@ const PlApp = () => {
     setSelectedSheetName('');
     setSheetData(null);
     setFlaskData(null);
-    setCurrentView('main'); // Reset to main view on sign out
+    setCurrentView('main');
   };
 
   const handleSheetSelect = async (sheetId, sheetName) => {
@@ -118,17 +111,10 @@ const PlApp = () => {
     setSpreadSheetId(sheetId);
 
     try {
-      console.log(`Loading and processing data from sheet: ${sheetName}`);
-      
-      // Get sheet data and process it with Flask backend
       const result = await getSheetDataAndProcessWithFlask(sheetId, 'A1:U58');
-      
-      console.log('Sheet data loaded and processed by Flask:', result);
       setSheetData(result.rawData);
       setFlaskData(result.processedData);
-      
     } catch (error) {
-      console.error('Error loading/processing sheet data:', error);
       setSheetsError(`Failed to load and process data from "${sheetName}". Please check your permissions and Flask backend connection.`);
       setSheetData(null);
       setFlaskData(null);
@@ -139,44 +125,44 @@ const PlApp = () => {
 
   if (!user) {
     return (
-      <div className='app-container'>
+      <div className="app-container">
         <GoogleSignIn onUserLoaded={setUser} />
       </div>
     );
   }
 
-  // Render Weight Calculator view
+  // Weight Calculator view
   if (currentView === 'weight-calculator') {
     return (
       <div className="app-container">
         <div className="main-content">
-          <header className="app-header flex items-center justify-between mb-6">
-            <div className="flex items-center gap-4">
+          <header className="app-header">
+            {/* left slot */}
+            <div className="header-left-slot">
               <button
                 onClick={() => setCurrentView('main')}
-                className="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors text-gray-700"
+                className="btn btn-gray"
               >
                 <ArrowLeft size={20} />
                 Back to App
               </button>
-              <div className="flex items-center gap-2">
-                <Calculator size={32} />
-                <h1 className="text-2xl font-bold">Weight Calculator</h1>
-              </div>
             </div>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-600">
-                Welcome, {user.name}
-              </span>
-              <button
-                onClick={handleSignOut}
-                className="text-sm px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
-              >
+
+            {/* centered title */}
+            <div className="header-right">
+              <Calculator size={32} />
+              <h1 className="header-title">Weight Calculator</h1>
+            </div>
+
+            {/* right actions */}
+            <div className="header-actions">
+              <span className="text-sm text-gray-600">Welcome, {user.name}</span>
+              <button onClick={handleSignOut} className="btn btn-red text-sm">
                 Sign Out
               </button>
             </div>
           </header>
-          
+
           <WeightCalculator />
         </div>
       </div>
@@ -187,96 +173,81 @@ const PlApp = () => {
   return (
     <div className="app-container">
       <div className="main-content">
-        <header className="app-header flex items-center justify-between mb-6">
-          <div className="flex items-center gap-2">
+        <header className="app-header">
+          {/* empty left slot */}
+          <div className="header-left-slot" />
+
+          {/* centered title */}
+          <div className="header-center">
             <Dumbbell size={40} />
-            <h1 className="text-2xl font-bold">project jn</h1>
+            <h1 className="header-title">project jn</h1>
           </div>
-          <div className="flex items-center gap-4">
+
+          {/* top-right actions */}
+          <div className="header-actions">
             <button
               onClick={() => setCurrentView('weight-calculator')}
-              className="flex items-center gap-2 px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors text-sm"
+              className="btn btn-blue text-sm"
             >
               <Calculator size={16} />
               Weight Calculator
             </button>
-            <span className="text-sm text-gray-600">
-              Welcome, {user.name}
-            </span>
-            <button
-              onClick={handleSignOut}
-              className="text-sm px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
-            >
+            <span className="text-sm text-gray-600">Welcome, {user.name}</span>
+            <button onClick={handleSignOut} className="btn btn-red text-sm">
               Sign Out
             </button>
           </div>
         </header>
 
         {/* Sheets Selection Section */}
-        <div className="sheets-section mb-6">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+        <div className="sheets-section">
+          <h2 className="sheets-title">
             <FileSpreadsheet size={24} />
             Select Workout Spreadsheet
           </h2>
-          
+
           {isLoadingSheets ? (
-            <div className="text-center py-8">
-              <div className="inline-flex items-center gap-2">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
-                Loading spreadsheets...
-              </div>
+            <div className="status-message status-loading">
+              <span className="loading-spinner" /> Loading spreadsheets...
             </div>
           ) : sheetsError ? (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+            <div className="status-message status-error">
               <p className="font-medium">Error:</p>
               <p>{sheetsError}</p>
-              <button 
-                onClick={handleLoadSheets}
-                className="mt-2 px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600 transition-colors"
-              >
+              <button onClick={handleLoadSheets} className="btn btn-red mt-2 text-sm">
                 Retry
               </button>
             </div>
           ) : availableSheets.length === 0 ? (
-            <div className="text-center py-8 bg-gray-50 rounded-lg">
-              <FileSpreadsheet size={48} className="mx-auto text-gray-400 mb-2" />
-              <p className="text-gray-500">No spreadsheets found</p>
-              <button 
-                onClick={handleLoadSheets}
-                className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-              >
+            <div className="empty-state">
+              <FileSpreadsheet size={48} className="empty-state-icon" />
+              <p className="empty-state-text">No spreadsheets found</p>
+              <button onClick={handleLoadSheets} className="btn btn-blue mt-2">
                 Refresh
               </button>
             </div>
           ) : (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div>
+              <div className="sheets-grid">
                 {availableSheets.map((sheet) => (
                   <button
                     key={sheet.id}
                     onClick={() => handleSheetSelect(sheet.id, sheet.name)}
                     disabled={isProcessingData}
-                    className={`p-4 border rounded-lg text-left hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                      selectedSheetId === sheet.id 
-                        ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200' 
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
+                    className={`sheet-card ${selectedSheetId === sheet.id ? 'selected' : ''}`}
                   >
-                    <div className="font-medium truncate text-gray-900">{sheet.name}</div>
-                    <div className="text-sm text-gray-500 mt-1">Google Sheets</div>
+                    <div className="sheet-name">{sheet.name}</div>
                     {selectedSheetId === sheet.id && (
-                      <div className="text-xs text-blue-600 mt-2 font-medium">
-                        ✓ Selected
-                      </div>
+                      <div className="sheet-selected">✓ Selected</div>
                     )}
                   </button>
                 ))}
               </div>
-              
-              <button 
+
+              <button
                 onClick={handleLoadSheets}
                 disabled={isProcessingData}
-                className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors disabled:opacity-50"
+                className="btn btn-green mt-2"
               >
                 Refresh Spreadsheets
               </button>
@@ -284,32 +255,23 @@ const PlApp = () => {
           )}
         </div>
 
-        {/* Show processing status */}
         {isProcessingData && (
-          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <div className="flex items-center gap-2">
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
-              <p className="text-blue-800 font-medium">
-                Processing sheet data with Flask backend...
-              </p>
-            </div>
+          <div className="status-message status-loading">
+            <span className="loading-spinner" /> Processing sheet data with Flask backend...
           </div>
         )}
 
-        {/* Only show workout navigation if data is processed */}
         {selectedSheetId && flaskData && (
           <>
-            <div className="workout-navigation mb-6 p-4 bg-white rounded-lg shadow-sm border">
-              <h3 className="text-lg font-semibold mb-4">Workout Navigation</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Week
-                  </label>
+            <div className="workout-navigation">
+              <h3 className="navigation-title">Workout Navigation</h3>
+              <div className="navigation-grid">
+                <div className="form-group">
+                  <label className="form-label">Week</label>
                   <select
                     value={selectedWeek}
                     onChange={(e) => setSelectedWeek(e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="form-select"
                   >
                     <option value="">Select Week</option>
                     {availableWeeks.map((week) => (
@@ -319,15 +281,13 @@ const PlApp = () => {
                     ))}
                   </select>
                 </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Day
-                  </label>
+
+                <div className="form-group">
+                  <label className="form-label">Day</label>
                   <select
                     value={selectedDay}
                     onChange={(e) => setSelectedDay(e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="form-select"
                     disabled={!selectedWeek}
                   >
                     <option value="">Select Day</option>
@@ -360,7 +320,6 @@ const PlApp = () => {
                   />
                 )}
 
-                {/* Backdown Sets - Any exercise labeled as backdown */}
                 {backdownSets.length > 0 && (
                   <ExerciseSection
                     title="Backdown Sets"
@@ -374,7 +333,6 @@ const PlApp = () => {
                   />
                 )}
 
-                {/* Accessories - Everything else */}
                 {accessories.length > 0 && (
                   <ExerciseSection
                     title="Accessory Exercises"
@@ -392,16 +350,11 @@ const PlApp = () => {
           </>
         )}
 
-        {/* Show message if sheet is selected but no data processed yet */}
         {selectedSheetId && !flaskData && !sheetsError && !isProcessingData && (
-          <div className="text-center py-8">
-            <div className="inline-flex items-center gap-2 text-gray-600">
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-400"></div>
-              Loading sheet data...
-            </div>
+          <div className="status-message">
+            <p>Loading sheet data...</p>
           </div>
         )}
-        
       </div>
     </div>
   );

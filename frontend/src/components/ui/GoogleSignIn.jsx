@@ -138,20 +138,68 @@ const GoogleSignIn = ({ onUserLoaded }) => {
   };
 
   return (
-    <div className="google-signin-container flex flex-col items-center justify-center min-h-screen bg-gray-50">
-      <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full">
-        <h2 className="text-2xl font-bold mb-6 text-center">Sign in to Project JN</h2>
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      width: '100vw',
+      height: '100vh',
+      backgroundColor: '#0e1822',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center'
+    }}>
+      <div style={{
+        backgroundColor: 'white',
+        padding: '32px',
+        borderRadius: '8px',
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+        width: '100%',
+        maxWidth: '400px',
+        margin: '0 16px',
+        textAlign: 'center'
+      }}>
+        <h2 style={{
+          fontSize: '24px',
+          fontWeight: 'bold',
+          marginBottom: '24px',
+          color: '#1f2937'
+        }}>
+          Sign in to Project JN
+        </h2>
+        
         {error && (
-          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-            <div className="font-medium">Error:</div>
-            <div className="text-sm mt-1">{error}</div>
+          <div style={{
+            marginBottom: '16px',
+            padding: '12px',
+            backgroundColor: '#fef2f2',
+            border: '1px solid #fca5a5',
+            color: '#dc2626',
+            borderRadius: '4px'
+          }}>
+            <div style={{ fontWeight: '500' }}>Error:</div>
+            <div style={{ fontSize: '14px', marginTop: '4px' }}>{error}</div>
           </div>
         )}
         
         {!scriptsLoaded && (
-          <div className="mb-4 p-3 bg-blue-100 border border-blue-400 text-blue-700 rounded">
-            <div className="flex items-center gap-2">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+          <div style={{
+            marginBottom: '16px',
+            padding: '12px',
+            backgroundColor: '#eff6ff',
+            border: '1px solid #93c5fd',
+            color: '#1d4ed8',
+            borderRadius: '4px'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{
+                border: '2px solid #1d4ed8',
+                borderTop: '2px solid transparent',
+                borderRadius: '50%',
+                width: '16px',
+                height: '16px',
+                animation: 'spin 1s linear infinite'
+              }}></div>
               Loading Google APIs...
             </div>
           </div>
@@ -160,16 +208,48 @@ const GoogleSignIn = ({ onUserLoaded }) => {
         <button
           onClick={handleSignIn}
           disabled={isLoading || !scriptsLoaded}
-          className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white font-bold py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
+          style={{
+            backgroundColor: isLoading || !scriptsLoaded ? '#93c5fd' : '#3b82f6',
+            color: 'white',
+            fontWeight: 'bold',
+            padding: '12px 24px',
+            borderRadius: '8px',
+            border: 'none',
+            cursor: isLoading || !scriptsLoaded ? 'not-allowed' : 'pointer',
+            transition: 'background-color 0.2s',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            margin: '0 auto',
+            fontSize: '16px'
+          }}
+          onMouseEnter={(e) => {
+            if (!isLoading && scriptsLoaded) {
+              e.target.style.backgroundColor = '#2563eb';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!isLoading && scriptsLoaded) {
+              e.target.style.backgroundColor = '#3b82f6';
+            }
+          }}
         >
           {isLoading ? (
             <>
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+              <div style={{
+                border: '2px solid white',
+                borderTop: '2px solid transparent',
+                borderRadius: '50%',
+                width: '20px',
+                height: '20px',
+                animation: 'spin 1s linear infinite'
+              }}></div>
               Signing in...
             </>
           ) : (
             <>
-              <svg className="w-5 h-5" viewBox="0 0 24 24">
+              <svg style={{ width: '20px', height: '20px' }} viewBox="0 0 24 24">
                 <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                 <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                 <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
@@ -181,10 +261,21 @@ const GoogleSignIn = ({ onUserLoaded }) => {
         </button>
         
         {!scriptsLoaded && (
-          <p className="text-xs text-gray-500 mt-2 text-center">
+          <p style={{
+            fontSize: '12px',
+            color: '#6b7280',
+            marginTop: '8px'
+          }}>
             Waiting for Google APIs to load...
           </p>
         )}
+        
+        <style>{`
+          @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
       </div>
     </div>
   );
