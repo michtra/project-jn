@@ -148,12 +148,6 @@ const PlApp = () => {
               </button>
             </div>
 
-            {/* centered title */}
-            <div className="header-right">
-              <Calculator size={32} />
-              <h1 className="header-title">Weight Calculator</h1>
-            </div>
-
             {/* right actions */}
             <div className="header-actions">
               <span className="text-sm text-gray-600">Welcome, {user.name}</span>
@@ -175,7 +169,15 @@ const PlApp = () => {
       <div className="main-content">
         <header className="app-header">
           {/* empty left slot */}
-          <div className="header-left-slot" />
+          <div className="header-left-slot">
+            <button
+              onClick={() => setCurrentView('weight-calculator')}
+              className="btn btn-blue text-sm"
+            >
+              <Calculator size={16} />
+              Weight Calculator
+            </button>
+            </div>
 
           {/* centered title */}
           <div className="header-center">
@@ -185,13 +187,6 @@ const PlApp = () => {
 
           {/* top-right actions */}
           <div className="header-actions">
-            <button
-              onClick={() => setCurrentView('weight-calculator')}
-              className="btn btn-blue text-sm"
-            >
-              <Calculator size={16} />
-              Weight Calculator
-            </button>
             <span className="text-sm text-gray-600">Welcome, {user.name}</span>
             <button onClick={handleSignOut} className="btn btn-red text-sm">
               Sign Out

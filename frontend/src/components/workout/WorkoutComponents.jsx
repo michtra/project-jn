@@ -11,7 +11,7 @@ export const WorkoutSummary = ({ exercises, topSets, topSetsCount }) => {
   
   // Count unique main lifts (Squat, Bench, Deadlift) being performed
   const mainLifts = exercises.filter(ex => 
-    ['Squat', 'Bench', 'Deadlift'].some(lift => 
+    ['comp'].some(lift => 
       ex.exercise && ex.exercise.toLowerCase().includes(lift.toLowerCase())
     )
   ).length;
