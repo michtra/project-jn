@@ -140,14 +140,14 @@ const GoogleSignIn = ({ onUserLoaded }) => {
   return (
     <div className="google-signin-container flex flex-col items-center justify-center min-h-screen bg-gray-50">
       <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full">
-        <h2 className="text-2xl font-bold mb-6 text-center">Sign in to Project JN</h2>
+        <h2 className="text-2xl font-bold mb-6 text-center">project jn</h2>
         {error && (
           <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
             <div className="font-medium">Error:</div>
             <div className="text-sm mt-1">{error}</div>
           </div>
         )}
-        
+
         {!scriptsLoaded && (
           <div className="mb-4 p-3 bg-blue-100 border border-blue-400 text-blue-700 rounded">
             <div className="flex items-center gap-2">
@@ -156,11 +156,11 @@ const GoogleSignIn = ({ onUserLoaded }) => {
             </div>
           </div>
         )}
-        
+
         <button
           onClick={handleSignIn}
           disabled={isLoading || !scriptsLoaded}
-          className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white font-bold py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
+          className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white font-medium py-2 px-4 rounded transition-colors flex items-center justify-center gap-2 text-sm"
         >
           {isLoading ? (
             <>

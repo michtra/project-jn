@@ -125,19 +125,58 @@ export function useWorkoutNavigation(flaskData = null) {
 export function useWorkoutData(selectedWeek, selectedDay, flaskData) {
   const [localExercises, setLocalExercises] = useState([]);
 
+  // Helper function to determine exercise type
+  const getExerciseType = (exerciseName) => {
+    if (!exerciseName) return "accessory";
+
+    const name = exerciseName.toLowerCase().trim();
+
+    // Check if it's labeled as backdown (takes priority)
+    if (name.includes('backdown') || name.includes('back down') || name.includes('(backdown)')) {
+      return "backdown";
+    }
+
+    // Check if it's a competition movement
+    const compPatterns = [
+      'comp sq',
+      'comp bench',
+      'comp deadlift',
+      'comp dl',
+      'competition squat',
+      'competition bench',
+      'competition deadlift',
+      'low bar squat'
+    ];
+
+    if (compPatterns.some(pattern => name.includes(pattern))) {
+      return "topset";
+    }
+
+    // Everything else is an accessory
+    return "accessory";
+  };
+
   // Convert Flask data structure to exercise array
   const workoutExercises = useMemo(() => {
     if (!flaskData?.[selectedWeek]?.[selectedDay]) {
       return [];
     }
-    
+
     const dayExercises = flaskData[selectedWeek][selectedDay];
     const exercises = [];
-    
-    // Convert Flask exercise object to array
-    Object.keys(dayExercises).forEach((exerciseName, index) => {
-      const exerciseData = dayExercises[exerciseName];
-      
+
+    // Convert Flask exercise object to array and sort by order field
+    const exerciseEntries = Object.entries(dayExercises).map(([exerciseName, exerciseData]) => ({
+      name: exerciseName,
+      data: exerciseData,
+      order: exerciseData.order || 0
+    }));
+
+    // Sort by the explicit order field
+    exerciseEntries.sort((a, b) => a.order - b.order);
+
+    exerciseEntries.forEach(({name: exerciseName, data: exerciseData, order}, index) => {
+
       // Handle rest day
       if (exerciseName === "Rest") {
         exercises.push({
@@ -152,17 +191,18 @@ export function useWorkoutData(selectedWeek, selectedDay, flaskData) {
           actualWeight: "",
           actualRpe: "",
           actualNotes: "",
-          originalIndex: index,
+          originalIndex: order,
+          type: "topset",
           // Add fields that WorkoutCard expects
           weightTaken: "",
           actual_rpe: ""
         });
         return;
       }
-      
+
       // Regular exercise
       exercises.push({
-        id: `${selectedWeek}-${selectedDay}-${exerciseName}-${index}`,
+        id: `${selectedWeek}-${selectedDay}-${exerciseName}-${order}`,
         exercise: exerciseName,
         prescribed: exerciseData.Prescribed || "",
         weight: exerciseData.Weight || "",
@@ -177,15 +217,16 @@ export function useWorkoutData(selectedWeek, selectedDay, flaskData) {
         actualWeight: exerciseData.Weight || "",
         actualRpe: exerciseData.RPE || "",
         actualNotes: exerciseData.Notes || "",
-        
+
         // Fields that WorkoutCard expects
         weightTaken: exerciseData.Weight || "",
         actual_rpe: exerciseData.RPE || "",
-        
-        originalIndex: index
+
+        type: getExerciseType(exerciseName),
+        originalIndex: order
       });
     });
-    
+
     return exercises;
   }, [flaskData, selectedWeek, selectedDay]);
 

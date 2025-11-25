@@ -1,20 +1,40 @@
 import React, { useState, useMemo } from 'react';
 
-const WeightCalculator = ({ initialWeight = 20, compact = false }) => {
+const WeightCalculator = ({ initialWeight = 45, compact = false, weightUnit = 'lbs' }) => {
     const [totalWeight, setTotalWeight] = useState(initialWeight);
     const [useCollars, setUseCollars] = useState(false);
-    const barbellWeight = 20; // standard powerlifting barbell weighs 20kg
-    const collarWeight = 2.5; // powerlifting collar weight in kg
-    const plateWeights = [25, 20, 15, 10, 5, 2.5, 1.25]; // standard powerlifting plates
-    const plateColors = {
-        25: '#dc2626',  // Red
-        20: '#2563eb',  // Blue
-        15: '#eab308',  // Yellow
-        10: '#16a34a',  // Green
-        5: '#ffffff',   // White
-        2.5: '#6b7280', // Gray
-        1.25: '#c0c0c0' // Silver
-    };
+
+    const config = weightUnit === 'lbs'
+        ? {
+            barbellWeight: 45,
+            collarWeight: 0,
+            plateWeights: [45, 25, 10, 5, 2.5],
+            plateColors: {
+                45: '#1f2937',
+                25: '#1f2937',
+                10: '#1f2937',
+                5: '#1f2937',
+                2.5: '#1f2937'
+            },
+            unit: 'lbs'
+          }
+        : {
+            barbellWeight: 20,
+            collarWeight: 2.5,
+            plateWeights: [25, 20, 15, 10, 5, 2.5, 1.25],
+            plateColors: {
+                25: '#dc2626',  // Red
+                20: '#2563eb',  // Blue
+                15: '#eab308',  // Yellow
+                10: '#16a34a',  // Green
+                5: '#ffffff',   // White
+                2.5: '#6b7280', // Gray
+                1.25: '#c0c0c0' // Silver
+            },
+            unit: 'kg'
+          };
+
+    const { barbellWeight, collarWeight, plateWeights, plateColors } = config;
 
     // Update weight when initialWeight changes (only on mount)
     React.useEffect(() => {
@@ -58,74 +78,90 @@ const WeightCalculator = ({ initialWeight = 20, compact = false }) => {
         });
 
         return (
-            <div className="flex flex-col items-center">
-                <div className="flex items-center mb-4">
-                    <div className="h-4 bg-gray-800 w-16"></div>
-                    {flattenedPlates.map((weight, index) => (
-                        <div
-                            key={`plate-${index}`}
-                            className="border-2 border-gray-600 rounded flex items-center justify-center font-bold text-sm ml-1"
+            <div style={{ textAlign: 'center', padding: '3rem 2rem' }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', marginBottom: '2rem' }}>
+                    <div style={{ height: '16px', width: '64px', background: 'rgba(71, 85, 105, 0.8)' }}></div>
+                    {flattenedPlates.map((weight, index) => {
+                        const bgColor = plateColors[weight] || '#1f2937';
+                        const isWhitePlate = (bgColor === '#ffffff');
+                        const textColor = isWhitePlate ? '#1f2937' : '#f1f5f9';
+                        return (
+                            <div
+                                key={`plate-${index}`}
+                                style={{
+                                    backgroundColor: bgColor,
+                                    borderColor: 'rgba(100, 116, 139, 0.5)',
+                                    color: textColor,
+                                    width: '60px',
+                                    height: '40px',
+                                    border: '2px solid rgba(100, 116, 139, 0.5)',
+                                    borderRadius: '4px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontWeight: 'bold',
+                                    fontSize: '0.875rem',
+                                    marginLeft: '4px'
+                                }}
+                            >
+                                {weight}
+                            </div>
+                        );
+                    })}
+                </div>
+
+                {weightUnit === 'kg' && (
+                    <div>
+                        <button
+                            onClick={() => setUseCollars(!useCollars)}
                             style={{
-                                backgroundColor: plateColors[weight],
-                                color: weight === 5 || weight === 1.25 ? '#000' : '#fff',
-                                width: '60px',
-                                height: '40px'
+                                padding: '0.75rem 1.5rem',
+                                borderRadius: '0.5rem',
+                                fontWeight: 600,
+                                fontSize: '0.875rem',
+                                transition: 'all 0.2s',
+                                background: useCollars
+                                    ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)'
+                                    : 'rgba(51, 65, 85, 0.5)',
+                                color: useCollars ? 'white' : '#94a3b8',
+                                border: useCollars ? 'none' : '1px solid rgba(100, 116, 139, 0.3)',
+                                cursor: 'pointer'
                             }}
                         >
-                            {weight}
-                        </div>
-                    ))}
-                </div>
-                
-                <div className="flex items-center space-x-6">
-                    <div className="text-center">
-                        <div className="bg-gray-100 rounded-lg p-4 min-w-[120px]">
-                            <div className="text-sm text-gray-600 mb-1">Total Weight</div>
-                            <div className={`${compact ? 'text-xl' : 'text-3xl'} font-bold text-gray-800`}>{actualWeight}kg</div>
-                            {weightDifference !== 0 && (
-                                <div className={`text-sm mt-1 ${weightDifference > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                                    {weightDifference > 0 ? `-${weightDifference}kg` : `+${Math.abs(weightDifference)}kg`}
-                                </div>
-                            )}
-                        </div>
+                            Collars {useCollars ? 'ON' : 'OFF'}
+                        </button>
                     </div>
-                    
-                    <button
-                        onClick={() => setUseCollars(!useCollars)}
-                        className={`px-4 py-2 rounded-lg font-medium transition-colors text-sm ${
-                            useCollars 
-                                ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                                : 'bg-gray-300 text-gray-700 hover:bg-gray-400'
-                        }`}
-                    >
-                        Collars {useCollars ? '(ON)' : '(OFF)'}
-                    </button>
-                </div>
+                )}
             </div>
         );
     };
 
     return (
-        <div className={`${compact ? 'max-w-2xl' : 'max-w-4xl'} mx-auto p-${compact ? '4' : '6'} bg-white rounded-lg ${compact ? '' : 'shadow-lg'}`}>
+        <div className={`${compact ? 'max-w-2xl' : 'max-w-4xl'} mx-auto rounded-lg ${compact ? '' : 'shadow-lg'}`} style={{ background: 'rgba(30, 41, 59, 0.6)', backdropFilter: 'blur(10px)', border: '1px solid rgba(148, 163, 184, 0.1)', padding: compact ? '1rem' : '3rem' }}>
             {!compact && (
-                <h1 className="text-3xl font-bold text-center mb-6 text-gray-800">
+                <h1 className="text-3xl font-bold text-center" style={{ color: '#f1f5f9', marginBottom: '2.5rem' }}>
                     Weight Plate Calculator
                 </h1>
             )}
 
             {!compact && (
-                <div className="mb-8">
-                    <div className="text-center mb-4">
-                        <label className="block text-lg font-medium text-gray-700 mb-2">
-                            Target Weight (kg)
+                <div className="mb-8 flex justify-center">
+                    <div className="flex items-center gap-4">
+                        <label className="text-lg font-medium" style={{ color: '#cbd5e1' }}>
+                            Target Weight ({weightUnit})
                         </label>
                         <input
                             type="number"
                             value={totalWeight || ''}
                             placeholder="Enter weight"
                             onChange={(e) => setTotalWeight(Number(e.target.value) || 0)}
-                            className="text-2xl font-bold text-center border-2 border-gray-300 rounded-lg px-4 py-2 w-40 focus:border-blue-500 focus:outline-none"
-                            step="2.5"
+                            className="text-2xl font-bold text-center rounded-lg px-4 py-2 w-40 focus:outline-none"
+                            style={{
+                                border: '2px solid rgba(100, 116, 139, 0.3)',
+                                background: 'rgba(51, 65, 85, 0.5)',
+                                color: '#f1f5f9'
+                            }}
+                            step={weightUnit === 'lbs' ? '2.5' : '2.5'}
                         />
                     </div>
                 </div>
@@ -134,10 +170,10 @@ const WeightCalculator = ({ initialWeight = 20, compact = false }) => {
             {totalWeight > totalBarbellWeight ? (
                 <PlateVisualization plates={calculatePlates} />
             ) : (
-                <div className="text-center text-gray-500 py-8">
-                    <p>Enter a weight greater than {totalBarbellWeight}kg to see the plate configuration</p>
-                    <p className="text-sm mt-1">
-                        (Barbell: {barbellWeight}kg{useCollars ? `, Collars: ${collarWeight * 2}kg` : ''})
+                <div className="text-center py-8" style={{ color: '#cbd5e1' }}>
+                    <p>Enter a weight greater than {totalBarbellWeight}{weightUnit} to see the plate configuration</p>
+                    <p className="text-sm mt-1" style={{ color: '#94a3b8' }}>
+                        (Barbell: {barbellWeight}{weightUnit}{useCollars && weightUnit === 'kg' ? `, Collars: ${collarWeight * 2}${weightUnit}` : ''})
                     </p>
                 </div>
             )}

@@ -3,15 +3,12 @@ import { Activity } from 'lucide-react';
 import { Select } from '../ui/UIComponents';
 import { WorkoutCard } from './WorkoutCard';
 
-export const WorkoutSummary = ({ exercises }) => {
+export const WorkoutSummary = ({ exercises, weightUnit = 'lbs' }) => {
   const totalSets = exercises.reduce((sum, ex) => sum + ex.sets, 0);
-  const totalVolume = exercises.reduce((sum, ex) => 
+  const totalVolume = exercises.reduce((sum, ex) =>
     sum + (ex.weightTaken ? parseFloat(ex.weightTaken) * ex.sets * ex.reps : 0), 0
   );
-  const mainLifts = exercises.filter(ex => 
-    ['Squat', 'Bench', 'Deadlift'].includes(ex.exercise)
-  ).length;
-  
+
   return (
     <div className="workout-summary">
       <h2>
@@ -25,11 +22,7 @@ export const WorkoutSummary = ({ exercises }) => {
         </div>
         <div className="summary-item">
           <div className="summary-value teal">{Math.round(totalVolume).toLocaleString()}</div>
-          <div className="summary-label">Volume (kg)</div>
-        </div>
-        <div className="summary-item">
-          <div className="summary-value green">{mainLifts}</div>
-          <div className="summary-label">Main Lifts</div>
+          <div className="summary-label">Volume ({weightUnit})</div>
         </div>
       </div>
     </div>
@@ -83,18 +76,16 @@ export const WorkoutNavigation = ({
   );
 };
 
-export const ExerciseSection = ({ title, exercises, isTopSet, onExerciseUpdate, icon: Icon, titleColor, selectedDay, selectedWeek }) => {
+export const ExerciseSection = ({ title, exercises, isTopSet, onExerciseUpdate, icon: Icon, titleColor, selectedDay, selectedWeek, weightUnit = 'lbs' }) => {
   if (exercises.length === 0) return null;
 
-  // Determine exercise type based on the title
-  const getExerciseType = () => {
-    if (title === "Top Sets") return "topset";
-    if (title === "Backdown Sets") return "backdown";
-    if (title === "Accessory Exercises") return "accessory";
+  // Determine exercise type for each individual exercise based on its type property
+  const getExerciseType = (exercise) => {
+    if (exercise.type === "topset") return "topset";
+    if (exercise.type === "backdown") return "backdown";
+    if (exercise.type === "accessory") return "accessory";
     return "accessory"; // default fallback
   };
-
-  const exerciseType = getExerciseType();
 
   return (
     <div className="exercise-section">
@@ -102,17 +93,21 @@ export const ExerciseSection = ({ title, exercises, isTopSet, onExerciseUpdate, 
         <Icon size={24} />
         {title}
       </h2>
-      {exercises.map((exercise, index) => (
-        <WorkoutCard 
-          key={`${exerciseType}-${exercise.originalIndex}`}
-          exercise={exercise} 
-          isTopSet={isTopSet}
-          exerciseType={exerciseType}
-          onUpdate={(updatedExercise) => onExerciseUpdate(exercise.originalIndex, updatedExercise)}
-          currentWeek={selectedWeek}
-          currentDay={selectedDay}
-        />
-      ))}
+      {exercises.map((exercise, index) => {
+        const exerciseType = getExerciseType(exercise);
+        return (
+          <WorkoutCard
+            key={`${exerciseType}-${exercise.originalIndex}`}
+            exercise={exercise}
+            isTopSet={exerciseType === "topset"}
+            exerciseType={exerciseType}
+            onUpdate={(updatedExercise) => onExerciseUpdate(exercise.originalIndex, updatedExercise)}
+            currentWeek={selectedWeek}
+            currentDay={selectedDay}
+            weightUnit={weightUnit}
+          />
+        );
+      })}
     </div>
   );
 };

@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import GoogleSignIn from './components/ui/GoogleSignIn';
-import {  TrendingDown, Dumbbell, FileSpreadsheet, Target, Zap, Calculator, ArrowLeft } from 'lucide-react';
+import { Dumbbell, FileSpreadsheet } from 'lucide-react';
 import { useWorkoutNavigation, useWorkoutData, useExerciseCategorization } from './hooks/workoutHooks';
 import {
   WorkoutSummary,
   ExerciseSection,
   EmptyWorkoutMessage
 } from './components/workout/WorkoutComponents';
-import WeightCalculator from './components/workout/WeightCalculator';
-import { 
-  loadSheets, 
-  getSheetDataAndProcessWithFlask, 
+import {
+  loadSheets,
+  getSheetDataAndProcessWithFlask,
   setAuthToken,
   setSpreadSheetId
 } from './sheetsFunctions';
@@ -25,9 +24,7 @@ const PlApp = () => {
   const [sheetData, setSheetData] = useState(null);
   const [flaskData, setFlaskData] = useState(null);
   const [isProcessingData, setIsProcessingData] = useState(false);
-  
-  // Add navigation state for weight calculator
-  const [currentView, setCurrentView] = useState('main'); // 'main' or 'weight-calculator'
+  const [weightUnit, setWeightUnit] = useState('lbs'); // 'kg' or 'lbs'
 
   // Use Flask data structure with navigation hooks
   const {
@@ -44,8 +41,6 @@ const PlApp = () => {
     selectedDay,
     flaskData // Use Flask processed data directly
   );
-
-  const { topSets, backdownSets, accessories } = useExerciseCategorization(workoutExercises);
 
   const handleWorkoutCardUpdate = (originalIndex, updatedExercise) => {
     console.log('App received update:', { originalIndex, updatedExercise });
@@ -107,7 +102,6 @@ const PlApp = () => {
     setSelectedSheetName('');
     setSheetData(null);
     setFlaskData(null);
-    setCurrentView('main'); // Reset to main view on sign out
   };
 
   const handleSheetSelect = async (sheetId, sheetName) => {
@@ -145,67 +139,21 @@ const PlApp = () => {
     );
   }
 
-  // Render Weight Calculator view
-  if (currentView === 'weight-calculator') {
-    return (
-      <div className="app-container">
-        <div className="main-content">
-          <header className="app-header flex items-center justify-between mb-6">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => setCurrentView('main')}
-                className="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors text-gray-700"
-              >
-                <ArrowLeft size={20} />
-                Back to App
-              </button>
-              <div className="flex items-center gap-2">
-                <Calculator size={32} />
-                <h1 className="text-2xl font-bold">Weight Calculator</h1>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-600">
-                Welcome, {user.name}
-              </span>
-              <button
-                onClick={handleSignOut}
-                className="text-sm px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
-              >
-                Sign Out
-              </button>
-            </div>
-          </header>
-          
-          <WeightCalculator />
-        </div>
-      </div>
-    );
-  }
-
-  // Main app view
   return (
     <div className="app-container">
       <div className="main-content">
-        <header className="app-header flex items-center justify-between mb-6">
-          <div className="flex items-center gap-2">
+        <header className="app-header">
+          <div>
             <Dumbbell size={40} />
-            <h1 className="text-2xl font-bold">project jn</h1>
+            <h1>project jn</h1>
           </div>
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setCurrentView('weight-calculator')}
-              className="flex items-center gap-2 px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors text-sm"
-            >
-              <Calculator size={16} />
-              Weight Calculator
-            </button>
-            <span className="text-sm text-gray-600">
+          <div>
+            <span>
               Welcome, {user.name}
             </span>
             <button
               onClick={handleSignOut}
-              className="text-sm px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+              className="bg-red-500"
             >
               Sign Out
             </button>
@@ -213,73 +161,88 @@ const PlApp = () => {
         </header>
 
         {/* Sheets Selection Section */}
-        <div className="sheets-section mb-6">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+        <div className="sheets-section">
+          <h2>
             <FileSpreadsheet size={24} />
             Select Workout Spreadsheet
           </h2>
-          
+
           {isLoadingSheets ? (
-            <div className="text-center py-8">
-              <div className="inline-flex items-center gap-2">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-2" style={{ color: '#94a3b8' }}>
+                <div className="animate-spin"></div>
                 Loading spreadsheets...
               </div>
             </div>
           ) : sheetsError ? (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+            <div className="bg-red-50">
               <p className="font-medium">Error:</p>
               <p>{sheetsError}</p>
-              <button 
+              <button
                 onClick={handleLoadSheets}
-                className="mt-2 px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600 transition-colors"
+                className="mt-2 bg-red-500"
               >
                 Retry
               </button>
             </div>
           ) : availableSheets.length === 0 ? (
-            <div className="text-center py-8 bg-gray-50 rounded-lg">
-              <FileSpreadsheet size={48} className="mx-auto text-gray-400 mb-2" />
+            <div className="bg-gray-50">
+              <FileSpreadsheet size={48} className="text-gray-400" />
               <p className="text-gray-500">No spreadsheets found</p>
-              <button 
+              <button
                 onClick={handleLoadSheets}
-                className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                className="mt-2 bg-blue-500"
               >
                 Refresh
               </button>
             </div>
           ) : (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {availableSheets.map((sheet) => (
-                  <button
-                    key={sheet.id}
-                    onClick={() => handleSheetSelect(sheet.id, sheet.name)}
+            <div>
+              <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.5rem' }}>
+                    Spreadsheet
+                  </label>
+                  <select
+                    value={selectedSheetId || ''}
+                    onChange={(e) => {
+                      const sheetId = e.target.value;
+                      const sheet = availableSheets.find(s => s.id === sheetId);
+                      if (sheet) {
+                        handleSheetSelect(sheet.id, sheet.name);
+                      }
+                    }}
                     disabled={isProcessingData}
-                    className={`p-4 border rounded-lg text-left hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                      selectedSheetId === sheet.id 
-                        ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200' 
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
+                    style={{
+                      width: '100%',
+                      padding: '0.875rem 1rem',
+                      border: '1px solid rgba(100, 116, 139, 0.3)',
+                      borderRadius: '0.5rem',
+                      background: 'rgba(51, 65, 85, 0.5)',
+                      color: '#f1f5f9',
+                      fontSize: '0.95rem',
+                      outline: 'none',
+                      cursor: 'pointer'
+                    }}
                   >
-                    <div className="font-medium truncate text-gray-900">{sheet.name}</div>
-                    <div className="text-sm text-gray-500 mt-1">Google Sheets</div>
-                    {selectedSheetId === sheet.id && (
-                      <div className="text-xs text-blue-600 mt-2 font-medium">
-                        ✓ Selected
-                      </div>
-                    )}
-                  </button>
-                ))}
+                    {!selectedSheetId && <option value="">Select a spreadsheet</option>}
+                    {availableSheets.slice(0, 2).map((sheet) => ( /** ONLY SHOW TWO SPREADSHEETS FOR DEMO PURPOSES **/
+                      <option key={sheet.id} value={sheet.id}>
+                        {sheet.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <button
+                  onClick={handleLoadSheets}
+                  disabled={isProcessingData}
+                  className="bg-green-500"
+                  style={{ whiteSpace: 'nowrap' }}
+                >
+                  Refresh
+                </button>
               </div>
-              
-              <button 
-                onClick={handleLoadSheets}
-                disabled={isProcessingData}
-                className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors disabled:opacity-50"
-              >
-                Refresh Spreadsheets
-              </button>
             </div>
           )}
         </div>
@@ -289,7 +252,7 @@ const PlApp = () => {
           <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <div className="flex items-center gap-2">
               <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
-              <p className="text-blue-800 font-medium">
+              <p className="font-medium" style={{ color: '#93c5fd' }}>
                 Processing sheet data with Flask backend...
               </p>
             </div>
@@ -299,11 +262,11 @@ const PlApp = () => {
         {/* Only show workout navigation if data is processed */}
         {selectedSheetId && flaskData && (
           <>
-            <div className="workout-navigation mb-6 p-4 bg-white rounded-lg shadow-sm border">
+            <div className="workout-navigation">
               <h3 className="text-lg font-semibold mb-4">Workout Navigation</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium mb-2">
                     Week
                   </label>
                   <select
@@ -321,7 +284,7 @@ const PlApp = () => {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium mb-2">
                     Day
                   </label>
                   <select
@@ -338,6 +301,20 @@ const PlApp = () => {
                     ))}
                   </select>
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Weight Unit
+                  </label>
+                  <select
+                    value={weightUnit}
+                    onChange={(e) => setWeightUnit(e.target.value)}
+                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="lbs">Pounds (lbs)</option>
+                    <option value="kg">Kilograms (kg)</option>
+                  </select>
+                </div>
               </div>
             </div>
 
@@ -345,48 +322,19 @@ const PlApp = () => {
               <EmptyWorkoutMessage selectedDay={selectedDay} />
             ) : (
               <>
-                <WorkoutSummary exercises={workoutExercises} />
+                <WorkoutSummary exercises={workoutExercises} weightUnit={weightUnit} />
 
-                {topSets.length > 0 && (
-                  <ExerciseSection
-                    title="Top Sets"
-                    exercises={topSets}
-                    isTopSet={true}
-                    onExerciseUpdate={handleWorkoutCardUpdate}
-                    icon={Target}
-                    titleColor="red"
-                    selectedDay={selectedDay}
-                    selectedWeek={selectedWeek}
-                  />
-                )}
-
-                {/* Backdown Sets - Any exercise labeled as backdown */}
-                {backdownSets.length > 0 && (
-                  <ExerciseSection
-                    title="Backdown Sets"
-                    exercises={backdownSets}
-                    isTopSet={false}
-                    onExerciseUpdate={handleWorkoutCardUpdate}
-                    icon={TrendingDown}
-                    titleColor="orange"
-                    selectedDay={selectedDay}
-                    selectedWeek={selectedWeek}
-                  />
-                )}
-
-                {/* Accessories - Everything else */}
-                {accessories.length > 0 && (
-                  <ExerciseSection
-                    title="Accessory Exercises"
-                    exercises={accessories}
-                    isTopSet={false}
-                    onExerciseUpdate={handleWorkoutCardUpdate}
-                    icon={Zap}
-                    titleColor="purple"
-                    selectedDay={selectedDay}
-                    selectedWeek={selectedWeek}
-                  />
-                )}
+                <ExerciseSection
+                  title="Workout"
+                  exercises={workoutExercises}
+                  isTopSet={false}
+                  onExerciseUpdate={handleWorkoutCardUpdate}
+                  icon={Dumbbell}
+                  titleColor="blue"
+                  selectedDay={selectedDay}
+                  selectedWeek={selectedWeek}
+                  weightUnit={weightUnit}
+                />
               </>
             )}
           </>

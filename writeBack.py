@@ -97,7 +97,7 @@ def writeData(data):
     sheet_write = sheet.values().update(spreadsheetId=sheet_id, range=coordinate, valueInputOption='RAW', body=body).execute()
 
 app = Flask("__name__")
-CORS(app)
+CORS(app, origins=["http://localhost:3000"], supports_credentials=True)
 
 @app.route("/Newdata", methods = ["POST"])
 def getData():

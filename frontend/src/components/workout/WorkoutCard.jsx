@@ -4,7 +4,7 @@ import { InputField, TextAreaField, StaticLabel } from '../ui/UIComponents';
 import { sendNewDataToBackend } from '../../sheetsFunctions';
 import WeightCalculator from './WeightCalculator';
 
-export const WorkoutCard = ({ exercise, isTopSet, exerciseType, onUpdate, currentWeek, currentDay }) => {
+export const WorkoutCard = ({ exercise, isTopSet, exerciseType, onUpdate, currentWeek, currentDay, weightUnit = 'lbs' }) => {
   const [showWeightCalculator, setShowWeightCalculator] = useState(false);
 
   const sendTrackingUpdate = async (field, newValue) => {
@@ -94,6 +94,17 @@ export const WorkoutCard = ({ exercise, isTopSet, exerciseType, onUpdate, curren
 
   const badgeProps = getBadgeProperties();
 
+  const getPrescribedRpe = () => {
+    if (!exercise.prescribed) return null;
+    const parts = exercise.prescribed.split('@');
+    if (parts.length > 1) {
+      return parts[1].trim();
+    }
+    return null;
+  };
+
+  const prescribedRpe = getPrescribedRpe();
+
   return (
     <div className={`workout-card ${badgeProps.className}`}>
       <div className="card-header">
@@ -103,21 +114,29 @@ export const WorkoutCard = ({ exercise, isTopSet, exerciseType, onUpdate, curren
           {badgeProps.text}
         </span>
       </div>
-      
+
       <div className="card-grid">
         <StaticLabel label="Sets" value={exercise.sets} />
         <StaticLabel label="Reps" value={exercise.reps} />
-        
+        {prescribedRpe && <StaticLabel label="Prescribed RPE" value={prescribedRpe} />}
+
         <div className="input-field">
-          <label>Weight (kg)</label>
+          <label style={{ color: '#94a3b8' }}>Weight ({weightUnit})</label>
           <div className="weight-input-container" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <input
               type="number"
               value={exercise.weightTaken || ''}
               onChange={(e) => handleWeightChange(e.target.value)}
-              onKeyDown={handleWeightKeyDown}  
+              onKeyDown={handleWeightKeyDown}
               placeholder="ex. 100"
-              style={{ border: '1px solid #ccc', padding: '8px', flex: '1' }}
+              style={{
+                border: '1px solid rgba(100, 116, 139, 0.3)',
+                padding: '8px',
+                flex: '1',
+                background: 'rgba(51, 65, 85, 0.5)',
+                color: '#f1f5f9',
+                borderRadius: '0.375rem'
+              }}
             />
             {shouldShowWeightCalculator() && exercise.weightTaken && (
               <button
@@ -126,7 +145,7 @@ export const WorkoutCard = ({ exercise, isTopSet, exerciseType, onUpdate, curren
                 style={{
                   padding: '8px',
                   border: '1px solid #3b82f6',
-                  backgroundColor: showWeightCalculator ? '#3b82f6' : 'white',
+                  backgroundColor: showWeightCalculator ? '#3b82f6' : 'rgba(51, 65, 85, 0.5)',
                   color: showWeightCalculator ? 'white' : '#3b82f6',
                   borderRadius: '4px',
                   cursor: 'pointer',
@@ -142,48 +161,62 @@ export const WorkoutCard = ({ exercise, isTopSet, exerciseType, onUpdate, curren
             )}
           </div>
         </div>
-        
+
         <div className="rpe-container">
-          <label>RPE</label>
+          <label style={{ color: '#94a3b8' }}>RPE</label>
           <input
             type="number"
             value={exercise.actual_rpe || ''}
             onChange={(e) => handleActualRpeChange(e.target.value)}
-            onKeyDown={handleRpeKeyDown}  
+            onKeyDown={handleRpeKeyDown}
             placeholder={exercise.prescribed ? `${exercise.prescribed.split('@')[1] || exercise.prescribed}` : "ex. 6"}
-            style={{ border: '1px solid #ccc', padding: '8px', width: '80px' }}
+            style={{
+              border: '1px solid rgba(100, 116, 139, 0.3)',
+              padding: '8px',
+              width: '80px',
+              background: 'rgba(51, 65, 85, 0.5)',
+              color: '#f1f5f9',
+              borderRadius: '0.375rem'
+            }}
           />
         </div>
       </div>
       
       {shouldShowWeightCalculator() && showWeightCalculator && exercise.weightTaken && (
-        <div style={{ 
-          marginTop: '16px', 
-          padding: '16px', 
-          backgroundColor: '#f8fafc', 
+        <div style={{
+          marginTop: '16px',
+          padding: '16px',
+          backgroundColor: 'rgba(51, 65, 85, 0.5)',
           borderRadius: '8px',
-          border: '1px solid #e2e8f0'
+          border: '1px solid rgba(100, 116, 139, 0.3)'
         }}>
-          <div style={{ marginBottom: '8px', fontSize: '14px', fontWeight: '500', color: '#374151' }}>
-            Plate Configuration for {exercise.weightTaken}kg:
+          <div style={{ marginBottom: '8px', fontSize: '14px', fontWeight: '500', color: '#cbd5e1' }}>
+            Plate Configuration for {exercise.weightTaken}{weightUnit}:
           </div>
-          <WeightCalculator initialWeight={parseFloat(exercise.weightTaken) || 20} compact={true} />
+          <WeightCalculator initialWeight={parseFloat(exercise.weightTaken) || (weightUnit === 'lbs' ? 45 : 20)} compact={true} weightUnit={weightUnit} />
         </div>
       )}
-      
+
       <div>
-        <label>Notes</label>
+        <label style={{ color: '#94a3b8' }}>Notes</label>
         <textarea
           value={exercise.notes || ''}
           onChange={(e) => handleNotesChange(e.target.value)}
-          onKeyDown={handleNotesKeyDown}  
+          onKeyDown={handleNotesKeyDown}
           placeholder="Add notes"
-          style={{ border: '1px solid #ccc', padding: '8px', width: '100%' }}
+          style={{
+            border: '1px solid rgba(100, 116, 139, 0.3)',
+            padding: '8px',
+            width: '100%',
+            background: 'rgba(51, 65, 85, 0.5)',
+            color: '#f1f5f9',
+            borderRadius: '0.375rem'
+          }}
         />
       </div>
 
       <div className="text-xs text-gray-400 mt-2 text-center">
-        💡 Press <kbd className="px-1 bg-gray-200 rounded">Enter</kbd> to save changes.
+        💡 Press <kbd style={{ padding: '0 0.25rem', background: 'rgba(51, 65, 85, 0.8)', borderRadius: '0.25rem', color: '#cbd5e1' }}>Enter</kbd> to save changes.
       </div>
     </div>
   );
